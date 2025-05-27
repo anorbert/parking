@@ -22,6 +22,15 @@ use HasFactory;
         'phone_number',
         'description',
         'status',
+        'amount'
     ];
     protected $table = 'payment_histories';
+
+    /**
+     * Relationship to the Bank model.
+     */
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class);
+    }
 }

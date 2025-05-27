@@ -14,6 +14,7 @@ use App\Models\Bank;
 use App\Models\PaymentToken;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use App\Models\PaymentHistory;
 
 class ParkingController extends Controller
 {
@@ -166,6 +167,7 @@ class ParkingController extends Controller
             // Detect operator
             $number = preg_replace('/\D/', '', $phone);
             $prefix = substr($number, -9, 2);
+            $trx_ref=Str::random(32);
             $operator = match ($prefix) {
                 '78', '79' => 'momo-mtn-rw',
                 '72', '73' => 'momo-airtel-rw',
@@ -178,7 +180,7 @@ class ParkingController extends Controller
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->post('https://payments-api.fdibiz.com/v2/momo/pull', [
-                'trxRef' => Str::random(32),
+                'trxRef' => $trx_ref,
                 'channelId' => $operator,
                 'accountId' => $bank->appId,
                 'msisdn' => '250' . substr($number, -9),
@@ -187,12 +189,31 @@ class ParkingController extends Controller
             ]);
 
             $responseData = $paymentResponse->json();
+            Log::info('Payment response: ' . json_encode($responseData));
+            
 
             if (isset($responseData['status']) && $responseData['status'] === 'fail') {
                 Log::error('Payment request failed: ' . ($responseData['message'] ?? 'Unknown error'));
                 throw new \Exception('Payment request failed: ' . ($responseData['message'] ?? 'Unknown error'));
             }
+
+            // Save the payment response for logging or further processing
+            $paymentHistory = PaymentHistory::create([
+                'parking_id' => $parking->id,
+                'amount' => $amount,
+                'phone_number' => $phone,
+                'bank_id' => $bank->id,
+                'type' => 'MOMO',
+                'status' => 'Processing',
+                'channel' => $operator,
+                'description' => $responseData['message'] ?? 'Payment initiated',
+                'payment_method' => $paymentMethod,
+                'trx_ref' => $trx_ref,
+            ]);
+
         }
+
+        // If payment method is cash or MoMo, we proceed to update the parking record
 
         // Final update
         $parking->update([
