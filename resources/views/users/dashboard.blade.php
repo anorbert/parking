@@ -1,0 +1,136 @@
+@extends('layouts.user')
+
+@section('content')
+<div class="container-fluid">
+  <div class="page-title mb-4">
+    <h3>Parking Management Dashboard</h3>
+  </div>
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
+  {{-- Add New Car Entry --}}
+  <div class="card mb-4">
+    <div class="card-header">New Car Entry</div>
+    <div class="card-body">
+      <form method="POST" action="{{ route('parking.entry') }}">
+        @csrf
+        <div class="form-row">
+          <div class="form-group col-md-8">
+            <label for="plate_number">Plate Number</label>
+            <input type="text" class="form-control" name="plate_number" required 
+                   pattern="^[A-Z]{3}\d{3}[A-Z]$"
+                   placeholder="e.g. RAB123Z" title="Format: RAB123Z">
+          </div>
+          <div class="form-group col-md-4">
+            <label for="submit_button">&nbsp;</label>
+            <input type="submit" class="form-control btn btn-primary" value="Validate & Enter">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {{-- Active Parked Vehicles --}}
+  <div class="card">
+    <div class="card-header">Currently Parked Vehicles</div>
+    <div class="card-body">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Plate</th>
+            <th>Entry Time</th>
+            <th>Zone</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($activeParkings as $parking)
+            <tr>
+              <td>{{ $parking->plate_number }}</td>
+              <td>{{ \Carbon\Carbon::parse($parking->entry_time)->format('d M Y, H:i') }}</td>
+              <td>{{ $parking->zone->name ?? 'N/A' }}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" onclick="openExitModal({{ $parking->id }})">Exit & Bill</button>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="4" class="text-center">No active parkings found.</td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Exit Modal -->
+<div class="modal fade" id="exitModal" tabindex="-1" aria-labelledby="exitModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" id="exitForm">
+      @csrf
+      @method('PUT')
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Vehicle Exit</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <p><strong>Plate Number:</strong> <span id="modalPlate"></span></p>
+          <p><strong>Zone:</strong> <span id="modalZone"></span></p>
+          <p><strong>Entry Time:</strong> <span id="modalEntry"></span></p>
+          <p><strong>Exit Time:</strong> <span id="modalExit"></span></p>
+          <p><strong>Duration:</strong> <span id="modalDuration"></span></p>
+          <p><strong>Amount to Pay:</strong> <span id="modalAmount"></span> RWF</p>
+
+          <div class="mb-3">
+            <label for="phone_number" class="form-label">Phone Number for Payment</label>
+            <input type="tel" class="form-control" name="phone_number" id="modalPhoneNumber" 
+                   pattern="^07[2,3,8,9]\d{7}$"
+                   placeholder="e.g. 0781234567"
+                   title="Phone must start with 07 and contain 10 digits">
+          </div>
+
+          <input type="hidden" name="amount" id="modalAmountInput">
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Confirm & Pay</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openExitModal(parkingId) {
+    fetch(`/parking/exit-info/${parkingId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('modalPlate').textContent = data.plate_number;
+                document.getElementById('modalZone').textContent = data.zone_name || 'N/A';
+                document.getElementById('modalEntry').textContent = data.entry_time;
+                document.getElementById('modalExit').textContent = data.exit_time;
+                document.getElementById('modalDuration').textContent = data.duration + ' mins';
+                document.getElementById('modalAmount').textContent = Number(data.amount).toLocaleString();
+                document.getElementById('modalAmountInput').value = data.amount;
+
+                document.getElementById('exitForm').action = `/parking/exit/${parkingId}`;
+                const modal = new bootstrap.Modal(document.getElementById('exitModal'));
+                modal.show();
+            } else {
+                alert(data.message || "Unable to load exit details.");
+            }
+        })
+        .catch(() => alert("Something went wrong while fetching exit details."));
+}
+</script>
+@endsection

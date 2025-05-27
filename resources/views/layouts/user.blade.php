@@ -43,7 +43,7 @@
 <body class="nav-md">
     <div class="container body">
         <div class="main_container">
-            @include('partials.sidebar')  <!-- Sidebar -->
+            @include('partials.users.user_sidebar')  <!-- Sidebar -->
             @include('partials.topnav')   <!-- Top Navbar -->
 
             <!-- Page Content -->

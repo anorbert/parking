@@ -38,18 +38,8 @@
           <li>
             <a><i class="fa fa-th"></i> Parking Management <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-              <li><a href="{{route('zones.index')}}">Zones</a></li>
-              <li><a href="{{route('slots.index')}}">Parking Slots</a></li>
               <li><a href="">Parked Vehicles</a></li>
               <li><a href="">Entry & Exit Logs</a></li>
-            </ul>
-          </li>
-
-          <li>
-            <a><i class="fa fa-users"></i> Users <span class="fa fa-chevron-down"></span></a>
-            <ul class="nav child_menu">
-              <li><a href="">Clients</a></li>
-              <li><a href="{{route('staff.index')}}">Staff</a></li>
             </ul>
           </li>
 
@@ -60,15 +50,6 @@
               <li><a href="">Reports</a></li>
             </ul>
           </li>
-
-          <li>
-            <a><i class="fa fa-cogs"></i> Settings <span class="fa fa-chevron-down"></span></a>
-            <ul class="nav child_menu">
-              <li><a href="{{route('rates.index')}}">Parking Rates</a></li>
-              <li><a href="">System Settings</a></li>
-            </ul>
-          </li>
-
         </ul>
       </div>
     </div>

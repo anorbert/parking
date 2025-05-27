@@ -6,7 +6,7 @@
         <div class="login_wrapper">
             <div class="animate form login_form">
                 <section class="login_content">
-                    <form method="POST" action="{{ route('login') }}">
+                    <form method="POST" action="{{ route('user_login.store') }}">
                         @csrf
                         <h1>Login</h1>
 

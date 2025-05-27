@@ -13,12 +13,29 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('role_id')->default(3);
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('otp', 6)->nullable();
+            $table->string('phone_number')->nullable();
+            $table->unsignedBigInteger('zone_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes(); // Add soft deletes
+
+            $table->foreign('role_id')
+                ->references('id')
+                ->on('roles') // Ensure this matches the table name
+                ->onDelete('restrict') // Restrict deletion of related companies
+                ->onUpdate('cascade'); // Update balances when the company ID changes
+                
+            $table->foreign('zone_id')
+                ->references('id')
+                ->on('zones') // Ensure this matches the table name
+                ->onDelete('set null') // Set zone_id to null if the zone is deleted
+                ->onUpdate('cascade'); // Update zone_id when the zone ID changes
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
