@@ -39,7 +39,7 @@
             <a><i class="fa fa-th"></i> Parking Management <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a href="">Parked Vehicles</a></li>
-              <li><a href="">Entry & Exit Logs</a></li>
+              <li><a href="{{route('parkings.index')}}">Entry & Exit Logs</a></li>
             </ul>
           </li>
 

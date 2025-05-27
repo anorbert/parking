@@ -24,6 +24,10 @@ class ParkingController extends Controller
     public function index()
     {
         //
+        $parkings = Parking::where('zone_id', Auth::user()->zone_id) // Assuming user has zone_id
+                    ->latest()
+                    ->get();
+        return view('users.parkings.index', compact('parkings'));
     }
 
     /**

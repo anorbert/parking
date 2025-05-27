@@ -87,7 +87,6 @@ class PaymentController extends Controller
             // Find the transaction using the trxRef
             $transaction = PaymentHistory::where('trx_ref', $trxRef)->first();
 
-
             if (!$transaction) {                
                 // Log::error('Transaction not found:', $trxRef);
                 return response()->json(['message' => 'Transaction not found.'], 404);

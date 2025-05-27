@@ -101,15 +101,6 @@
                    placeholder="e.g. 0781234567"
                    title="Phone must start with 07 and contain 10 digits">
           </div>
-
-          {{-- <div class="mb-3">
-            <label for="phone_number" class="form-label">Phone Number for Payment</label>
-            <input type="tel" class="form-control" name="phone_number" id="modalPhoneNumber" 
-                   pattern="^07[2,3,8,9]\d{7}$"
-                   placeholder="e.g. 0781234567"
-                   title="Phone must start with 07 and contain 10 digits">
-          </div> --}}
-
           <input type="hidden" name="amount" id="modalAmountInput">
         </div>
 
