@@ -89,13 +89,27 @@
           <p><strong>Duration:</strong> <span id="modalDuration"></span></p>
           <p><strong>Amount to Pay:</strong> <span id="modalAmount"></span> RWF</p>
 
-          <div class="mb-3">
+          <label for="payment_method">Payment Method</label>
+          <select name="payment_method" id="payment_method" class="form-control" required onchange="togglePhoneField(this.value)">
+              <option value="cash">Cash</option>
+              <option value="momo">MoMo</option>
+          </select>
+
+          <div id="phone_input_group" style="display: none; margin-top: 10px;">
+              <label for="phone_number">Phone Number for MoMo</label>
+              <input type="tel" class="form-control" name="phone_number" id="modalPhoneNumber" 
+                   pattern="^07[2,3,8,9]\d{7}$"
+                   placeholder="e.g. 0781234567"
+                   title="Phone must start with 07 and contain 10 digits">
+          </div>
+
+          {{-- <div class="mb-3">
             <label for="phone_number" class="form-label">Phone Number for Payment</label>
             <input type="tel" class="form-control" name="phone_number" id="modalPhoneNumber" 
                    pattern="^07[2,3,8,9]\d{7}$"
                    placeholder="e.g. 0781234567"
                    title="Phone must start with 07 and contain 10 digits">
-          </div>
+          </div> --}}
 
           <input type="hidden" name="amount" id="modalAmountInput">
         </div>
@@ -132,5 +146,14 @@ function openExitModal(parkingId) {
         })
         .catch(() => alert("Something went wrong while fetching exit details."));
 }
+
+function togglePhoneField(value) {
+        const phoneField = document.getElementById('phone_input_group');
+        if (value === 'momo') {
+            phoneField.style.display = 'block';
+        } else {
+            phoneField.style.display = 'none';
+        }
+    }
 </script>
 @endsection

@@ -99,7 +99,8 @@ class ParkingController extends Controller
     public function exit(Request $request, $id)
     {
         $request->validate([
-            'phone_number' => 'string|max:255',
+            'payment_method' => 'required|in:cash,momo',
+            'phone_number' => 'required_if:payment_method,momo|min:10',
             'amount'  => 'required|numeric',
         ]);
         // Check if the parking record exists and is active
@@ -128,12 +129,94 @@ class ParkingController extends Controller
         $zoneId = $parking->zone;
         $amount = $request->amount;
 
+        if ($request->payment_method === 'momo') {
+             // Retrieve Payment Hook
+            $bank = Bank::where('payment_owner', 'FDI')->first();
+            if (!$bank) {
+                throw new \Exception('Payment hooks not available.');
+            }
+
+            // Check valid token
+            $token = PaymentToken::where('bank_id', $bank->id)
+                ->where('expired_at', '>', now())
+                ->first();
+
+            if (!$token) {
+                $response = Http::post('https://payments-api.fdibiz.com/v2/auth', [
+                    'appId' => $bank->appId,
+                    'secret' => $bank->secret,
+                ]);
+
+                if ($response->status() == 200) {
+                    $data = $response->json();
+
+                    $token = PaymentToken::create([
+                        'bank_id' => $bank->id,
+                        'token' => $data['data']['token'],
+                        'expired_at' => $data['data']['expires_at'], // Ensure this is in a datetime format
+                    ]);
+                } else {
+                    throw new \Exception('Failed to retrieve token.');
+                }
+            }
+
+            // Build payment info
+            $trx_ref = Str::random(32);
+            $amount = $request->amount;
+            $phone = $request->phone_number;
+
+            // Channel detection
+            $number = preg_replace('/\D/', '', $phone); // keep only digits
+            $prefix = substr($number, -9, 2);
+            switch ($prefix) {
+                case '78':
+                case '79':
+                    $operator = 'momo-mtn-rw';
+                    break;
+                case '72':
+                case '73':
+                    $operator = 'momo-airtel-rw';
+                    break;
+                default:
+                    throw new \Exception('Invalid phone number for payment.');
+            }
+
+            // Send payment request
+            $paymentResponse = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token->token,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])->post('https://payments-api.fdibiz.com/v2/momo/pull', [
+                'trxRef' => $trx_ref,
+                'channelId' => $operator,
+                'accountId' => $bank->appId,
+                'msisdn' => '250' . substr($phone, -9),
+                'amount' => $amount,
+                'callback' => 'http://94.72.112.148:8030/api/donation/callback',
+            ]);
+
+            $responseData = $paymentResponse->json();
+
+            if (isset($responseData['status']) && $responseData['status'] === 'fail') {
+                throw new \Exception('Payment request failed: ' . $responseData['message'] ?? 'Unknown error');
+            } 
+
+            // Update the record
+            $parking->update([
+                'exit_time' => $exitTime,
+                'bill' => $amount,
+                'status' => 'Processing',
+                'user_id' => Auth::id(),
+            ]);
+        }
+
         // Update the record
         $parking->update([
             'exit_time' => $exitTime,
             'bill' => $amount,
             'status' => 'inactive',
             'phone_number' => $request->phone_number,
+            'payment_method' => $request->payment_method,
             'user_id' => Auth::id(),
         ]);
 
