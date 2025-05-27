@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid">
   <div class="page-title mb-4">
-    <h3>Parking Management Dashboard</h3>
+    <h3>Parking Management</h3>
   </div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
