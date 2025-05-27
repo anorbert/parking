@@ -74,7 +74,6 @@
   <div class="modal-dialog">
     <form method="POST" id="exitForm">
       @csrf
-      @method('PUT')
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Confirm Vehicle Exit</h5>
