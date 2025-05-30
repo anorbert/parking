@@ -35,43 +35,40 @@ class LoginController extends Controller
     {
         // Validate input
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string|min:8',
+            'phone' => 'required',
+            'pin' => 'required|digits:4',
         ]);
 
-        // Find user by email
-        $user = User::where('email', $request->email)->first();
+        // Attempt login
+        $credentials = [
+            'phone_number' => $request->phone,
+            'password' => $request->pin, // still called password in DB
+        ];
 
-        if ($user) {
-            $remember = $request->has('remember');
+        $remember = $request->has('remember');
 
-            if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $remember)) {
-                // Authenticated successfully
-                Log::info('User logged in successfully. User ID: ' . $user->id);
+        if (Auth::attempt($credentials, $remember)) {
+            $user = Auth::user();
+            Log::info('User logged in successfully. User ID: ' . $user->id);
 
-                // Check role_id and redirect accordingly
-                switch ($user->role_id) {
-                    case 1:
-                        return redirect()->route('admin.dashboard')->with('success', 'Welcome Admin!');
-                    case 2:
-                        return redirect()->route('editor.dashboard')->with('success', 'Welcome Editor!');
-                    case 3:
-                        return redirect()->route('user.dashboard')->with('success', 'Welcome!');
-                    default:
-                        Auth::logout();
-                        return redirect()->back()->with('error', 'Unauthorized role.');
-                }
-
-            } else {
-                Log::warning('Failed login attempt for email: ' . $request->email);
-                return redirect()->back()->with('error', 'Invalid credentials.');
+            // Redirect based on role
+            switch ($user->role_id) {
+                case 1:
+                    return redirect()->route('admin.dashboard')->with('success', 'Welcome Admin!');
+                case 2:
+                    return redirect()->route('editor.dashboard')->with('success', 'Welcome Editor!');
+                case 3:
+                    return redirect()->route('user.dashboard')->with('success', 'Welcome!');
+                default:
+                    Auth::logout();
+                    return redirect()->back()->with('error', 'Unauthorized role.');
             }
-
-        } else {
-            Log::warning('Login failed: user not found for email ' . $request->email);
-            return redirect()->back()->with('error', 'User not found.');
         }
+
+        Log::warning('Failed login attempt for phone: ' . $request->phone);
+        return redirect()->back()->with('error', 'Invalid credentials.');
     }
+
 
 
     /**

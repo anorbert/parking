@@ -10,35 +10,71 @@
                         @csrf
                         <h1>Login</h1>
 
+                        {{-- Phone Input --}}
                         <div>
-                            <input type="email" name="email" class="form-control" placeholder="Email" required value="{{ old('email') }}" />
-                            @error('email')
+                            <input 
+                                type="tel" 
+                                name="phone" 
+                                class="form-control" 
+                                placeholder="Phone (e.g. 078xxxxxxx)" 
+                                required 
+                                value="{{ old('phone') }}" 
+                                style="height: 50px; font-size: 18px;"
+                            />
+                            @error('phone')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
 
+                        {{-- PIN Input --}}
                         <div>
-                            <input type="password" name="password" class="form-control" placeholder="Password" required />
-                            @error('password')
+                            <input 
+                                type="password" 
+                                name="pin" 
+                                class="form-control" 
+                                placeholder="4-digit PIN" 
+                                required 
+                                maxlength="4" 
+                                pattern="\d{4}" 
+                                title="Enter exactly 4 digits"
+                                style="height: 50px; font-size: 18px;" 
+                            />
+                            @error('pin')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
 
+                        {{-- Remember Me --}}
+                        <div class="form-check text-left" style="margin-top: 10px; margin-bottom: 10px;">
+                            <input 
+                                class="form-check-input" 
+                                type="checkbox" 
+                                name="remember" 
+                                id="remember" 
+                                {{ old('remember') ? 'checked' : '' }}
+                            >
+                            <label class="form-check-label" for="remember">
+                                Remember me
+                            </label>
+                        </div>
+
+                        {{-- Submit --}}
                         <div>
-                            <button type="submit" class="btn btn-primary submit">Log in</button>
-                            <a class="reset_pass" href="">Lost your password?</a>
+                            <button 
+                                type="submit" 
+                                class="btn btn-primary submit" 
+                                style="height: 50px; font-size: 18px;"
+                            >
+                                Log in
+                            </button>
+                            <a class="reset_pass" href="#">Lost your password?</a>
                         </div>
 
                         <div class="clearfix"></div>
 
+                        {{-- Footer --}}
                         <div class="separator">
-                            <p class="change_link">New to site?
-                                <a href="" class="to_register"> Create Account </a>
-                            </p>
-
-                            <div class="clearfix"></div>
                             <br />
-
                             <div>
                                 <h1><i class="fa fa-university"></i> Parking System</h1>
                                 <p>© {{ date('Y') }} All Rights Reserved. Privacy and Terms</p>

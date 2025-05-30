@@ -46,14 +46,6 @@
           </li>
 
           <li>
-            <a><i class="fa fa-users"></i> Users <span class="fa fa-chevron-down"></span></a>
-            <ul class="nav child_menu">
-              <li><a href="">Clients</a></li>
-              <li><a href="{{route('staff.index')}}">Staff</a></li>
-            </ul>
-          </li>
-
-          <li>
             <a><i class="fa fa-credit-card"></i> Payments <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a href="{{route('admin.payments.index')}}">All Payments</a></li>
@@ -64,6 +56,7 @@
           <li>
             <a><i class="fa fa-cogs"></i> Settings <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
+              <li><a href="{{route('staff.index')}}">Users</a></li>
               <li><a href="{{route('rates.index')}}">Parking Rates</a></li>
               <li><a href="">System Settings</a></li>
             </ul>
