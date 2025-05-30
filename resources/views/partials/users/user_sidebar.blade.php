@@ -48,7 +48,7 @@
             <a><i class="fa fa-credit-card"></i> Payments <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a href="{{route('user.payments.index')}}">All Payments</a></li>
-              <li><a href="">Reports</a></li>
+              <li><a href="{{ route('user.reports.index') }}">Reports</a></li>
             </ul>
           </li>
         </ul>

@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Users\ParkingController;
 use App\Http\Controllers\Users\ExemptedVehicleController;
 use App\Http\Controllers\Users\PaymentController;
+use App\Http\Controllers\Users\UserReportController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -35,7 +36,7 @@ Route::resource('user_login',LoginController::class);
 Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::resource('vehicles', ExemptedVehicleController::class);
     Route::resource('payments', PaymentController::class);
-    Route::get('payment-reports', [PaymentController::class, 'report'])->name('payment.reports');
+    Route::resource('reports', UserReportController::class);
 });
 
 // Route::get('/dashboard', function () {

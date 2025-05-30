@@ -4,17 +4,33 @@ namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\PaymentHistory;
+use App\Models\Parking;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
-        $payments = PaymentHistory::latest()->get();
+        $query = Parking::with('user')->where('user_id', Auth::id());
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        $payments = $query->latest()->get();
+
         return view('users.payments.index', compact('payments'));
     }
 
