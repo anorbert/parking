@@ -15,6 +15,7 @@ use App\Models\PaymentToken;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use App\Models\PaymentHistory;
+use App\Models\Vehicle;
 
 class ParkingController extends Controller
 {
@@ -108,8 +109,8 @@ class ParkingController extends Controller
     public function exit(Request $request, $id)
     {
         $request->validate([
-            'payment_method' => 'required|in:cash,momo',
-            'phone_number' => 'required_if:payment_method,momo|min:10',
+            'payment_method' => 'in:cash,momo',
+            'phone_number' => 'nullable|min:10',
             'amount' => 'required|numeric',
         ]);
 
@@ -189,7 +190,7 @@ class ParkingController extends Controller
                 'accountId' => $bank->appId,
                 'msisdn' => '250' . substr($number, -9),
                 'amount' => $amount,
-                'callback' => 'http://94.72.112.148:8030/api/donation/callback',
+                'callback' => 'http://94.72.112.148:8030/api/payment/callback',
             ]);
 
             $responseData = $paymentResponse->json();
@@ -217,15 +218,13 @@ class ParkingController extends Controller
 
         }
 
-        // If payment method is cash or MoMo, we proceed to update the parking record
-
         // Final update
         $parking->update([
             'exit_time' => $exitTime,
             'bill' => $amount,
             'total_time' => $duration,
             'status' => 'inactive',
-            'phone_number' => $phone,
+            'phone_number' => $phone ?? null,
             'payment_method' => $paymentMethod,
             'user_id' => Auth::id(),
         ]);
@@ -377,14 +376,34 @@ class ParkingController extends Controller
 
         $entryTime = Carbon::parse($parking->entry_time);
         $exitTime = now();
-        $duration = $entryTime->diffInMinutes($exitTime);;
+        $duration = $entryTime->diffInMinutes($exitTime);
 
-        $rate = ParkingRate::where('zone_id', $parking->zone_id)
-                    ->where('duration_minutes', '<=', $duration)
-                    ->orderByDesc('duration_minutes')
-                    ->first();
+        $exemptedVehicle = Vehicle::where('plate_number', $parking->plate_number)
+            ->first();
 
-        $amount = $rate ? $rate->rate : 0;
+        $isExempted = false;
+
+        if ($exemptedVehicle) {
+            // Check if exempted and still valid
+            if (
+                $exemptedVehicle->billing_type != 'free' &&
+                Carbon::parse($exemptedVehicle->expired_at)->isFuture()
+            ) {
+                $isExempted = true;
+            }
+        }
+
+        // Determine payment amount
+        if ($isExempted) {
+            $amount = 0;
+        } else {
+            $rate = ParkingRate::where('zone_id', $parking->zone_id)
+                ->where('duration_minutes', '<=', $duration)
+                ->orderByDesc('duration_minutes')
+                ->first();
+
+            $amount = $rate ? $rate->rate : 0;
+        }
 
         return response()->json([
             'success' => true,

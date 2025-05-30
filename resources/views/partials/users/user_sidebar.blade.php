@@ -38,15 +38,16 @@
           <li>
             <a><i class="fa fa-th"></i> Parking Management <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-              <li><a href="">Parked Vehicles</a></li>
+              <li><a href="{{route('user.vehicles.index')}}">Exempted Vehicles</a></li>
               <li><a href="{{route('parkings.index')}}">Entry & Exit Logs</a></li>
+              
             </ul>
           </li>
 
           <li>
             <a><i class="fa fa-credit-card"></i> Payments <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-              <li><a href="">All Payments</a></li>
+              <li><a href="{{route('user.payments.index')}}">All Payments</a></li>
               <li><a href="">Reports</a></li>
             </ul>
           </li>

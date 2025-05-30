@@ -33,6 +33,7 @@
                 <th>Zone</th>
                 <th>Duration (mins)</th>
                 <th>Rate</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -41,6 +42,13 @@
                     <td>{{ $rate->zone->name ?? 'All Zones' }}</td>
                     <td>{{ $rate->duration_minutes }}</td>
                     <td>{{ number_format($rate->rate, 2) }}</td>
+                    <td>
+                        <a href="{{ route('rates.edit', $rate->id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        <form method="POST" action="{{ route('rates.destroy', $rate->id) }}" class="d-inline">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-danger btn-sm">Delete</button>
+                        </form>
                 </tr>
             @endforeach
         </tbody>

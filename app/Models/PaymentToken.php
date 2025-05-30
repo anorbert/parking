@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PaymentToken extends Model
 {
-    //    
+    // 
+       
     protected $fillable = [
         'token',
         'bank_id',

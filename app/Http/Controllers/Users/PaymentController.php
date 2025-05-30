@@ -14,6 +14,8 @@ class PaymentController extends Controller
     public function index()
     {
         //
+        $payments = PaymentHistory::latest()->get();
+        return view('users.payments.index', compact('payments'));
     }
 
     /**

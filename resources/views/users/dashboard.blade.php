@@ -81,27 +81,32 @@
         </div>
 
         <div class="modal-body">
-          <p><strong>Plate Number:</strong> <span id="modalPlate"></span></p>
-          <p><strong>Zone:</strong> <span id="modalZone"></span></p>
-          <p><strong>Entry Time:</strong> <span id="modalEntry"></span></p>
-          <p><strong>Exit Time:</strong> <span id="modalExit"></span></p>
-          <p><strong>Duration:</strong> <span id="modalDuration"></span></p>
-          <p><strong>Amount to Pay:</strong> <span id="modalAmount"></span> RWF</p>
-
-          <label for="payment_method">Payment Method</label>
-          <select name="payment_method" id="payment_method" class="form-control" required onchange="togglePhoneField(this.value)">
-              <option value="cash">Cash</option>
-              <option value="momo">MoMo</option>
-          </select>
-
-          <div id="phone_input_group" style="display: none; margin-top: 10px;">
-              <label for="phone_number">Phone Number for MoMo</label>
-              <input type="tel" class="form-control" name="phone_number" id="modalPhoneNumber" 
-                   pattern="^07[2,3,8,9]\d{7}$"
-                   placeholder="e.g. 0781234567"
-                   title="Phone must start with 07 and contain 10 digits">
+          <div class="col-md-8">
+            <p><strong>Plate Number:</strong> <span id="modalPlate"></span></p>
+            <p><strong>Zone:</strong> <span id="modalZone"></span></p>
+            <p><strong>Entry Time:</strong> <span id="modalEntry"></span></p>
+            <p><strong>Exit Time:</strong> <span id="modalExit"></span></p>
+            <p><strong>Duration:</strong> <span id="modalDuration" style="color: red"></span></p>
           </div>
-          <input type="hidden" name="amount" id="modalAmountInput">
+          <div class="col-md-4">
+            <p style="font-size: 32px;"><strong>Pay:</strong> <span id="modalAmountLarge"></span> RWF</p>
+          </div>
+          <div class="col-md-12">
+            <label for="payment_method">Payment Method</label>
+            <select name="payment_method" id="payment_method" class="form-control" required onchange="togglePhoneField(this.value)">
+                <option value="cash">Cash</option>
+                <option value="momo">MoMo</option>
+            </select>
+
+            <div id="phone_input_group" style="display: none; margin-top: 10px;">
+                <label for="phone_number">Phone Number for MoMo</label>
+                <input type="tel" class="form-control" name="phone_number" id="modalPhoneNumber" 
+                    pattern="^07[2,3,8,9]\d{7}$"
+                    placeholder="e.g. 0781234567"
+                    title="Phone must start with 07 and contain 10 digits">
+            </div>
+            <input type="hidden" name="amount" id="modalAmountInput">
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -124,7 +129,7 @@ function openExitModal(parkingId) {
                 document.getElementById('modalEntry').textContent = data.entry_time;
                 document.getElementById('modalExit').textContent = data.exit_time;
                 document.getElementById('modalDuration').textContent = data.duration + ' mins';
-                document.getElementById('modalAmount').textContent = Number(data.amount).toLocaleString();
+                document.getElementById('modalAmountLarge').textContent = Number(data.amount).toLocaleString();
                 document.getElementById('modalAmountInput').value = data.amount;
 
                 document.getElementById('exitForm').action = `/parking/exit/${parkingId}`;

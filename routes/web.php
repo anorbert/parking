@@ -15,15 +15,28 @@ use App\Http\Controllers\UserController;
 //Admin
 use App\Http\Controllers\Admin\RateController;
 use App\Http\Controllers\Admin\ZoneController;
+use App\Http\Controllers\Admin\VehicleController;
+use App\Http\Controllers\Admin\ExitLogsController;
+use App\Http\Controllers\Admin\AdminPaymentController;
+use App\Http\Controllers\Admin\AdminReportController;
 
 
 use App\Http\Controllers\Users\ParkingController;
+use App\Http\Controllers\Users\ExemptedVehicleController;
+use App\Http\Controllers\Users\PaymentController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::resource('user_login',LoginController::class);
+
+
+Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
+    Route::resource('vehicles', ExemptedVehicleController::class);
+    Route::resource('payments', PaymentController::class);
+    Route::get('payment-reports', [PaymentController::class, 'report'])->name('payment.reports');
+});
 
 // Route::get('/dashboard', function () {
 //     return view('dashboard');
@@ -32,6 +45,9 @@ Route::resource('user_login',LoginController::class);
 Route::middleware('auth')->group(function () {
     //Dashboard
     Route::resource('staff',StaffController::class);
+    Route::resource('vehicles',VehicleController::class);
+   
+    Route::resource('logs',ExitLogsController::class);
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/editor/dashboard', [EditorController::class, 'index'])->name('editor.dashboard');
     Route::get('/user/dashboard', [UserController::class, 'index'])->name('user.dashboard');
@@ -52,5 +68,13 @@ Route::middleware('auth')->group(function () {
     
 
 });
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    // Route::resource('exempted-vehicles', ExemptedVehicleController::class);
+    Route::resource('payments', AdminPaymentController::class);
+    Route::resource('reports', AdminReportController::class);
+
+});
+
 
 require __DIR__.'/auth.php';

@@ -30,7 +30,7 @@
         <ul class="nav side-menu">
 
           <li>
-            <a href="">
+            <a href="{{route('admin.dashboard')}}">
               <i class="fa fa-home"></i> Dashboard
             </a>
           </li>
@@ -40,8 +40,8 @@
             <ul class="nav child_menu">
               <li><a href="{{route('zones.index')}}">Zones</a></li>
               <li><a href="{{route('slots.index')}}">Parking Slots</a></li>
-              <li><a href="">Parked Vehicles</a></li>
-              <li><a href="">Entry & Exit Logs</a></li>
+              <li><a href="{{route('vehicles.index')}}">Exempted Vehicles</a></li>
+              <li><a href="{{route('logs.index')}}">Entry & Exit Logs</a></li>
             </ul>
           </li>
 
@@ -56,8 +56,8 @@
           <li>
             <a><i class="fa fa-credit-card"></i> Payments <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-              <li><a href="">All Payments</a></li>
-              <li><a href="">Reports</a></li>
+              <li><a href="{{route('admin.payments.index')}}">All Payments</a></li>
+              <li><a href="{{route('admin.reports.index')}}">Reports</a></li>
             </ul>
           </li>
 

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Slot;
+use App\Models\Zone;
 use App\Models\Parking;
 use App\Models\User;
-use Auth;
-use Log;
-
+use App\Models\PaymentHistory as Payment;
+use Carbon\Carbon;
 class AdminController extends Controller
 {
     /**
@@ -15,21 +16,77 @@ class AdminController extends Controller
      */
     public function index()
     {
-        //
-        return view('dashboard', [
-            'totalSlots' =>0,
-            'occupiedSlots' => 0,
-            'totalRevenue' => 0,
-            'registeredUsers' => User::count(),
-            'activeTickets' => 0,
-            'zones' => [
-                'Zone A' => [45, 60],
-                'Zone B' => [30, 50],
-                'Zone C' => [20, 30],
-            ],
-            'revenueDates' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            'revenueData' => [100000, 150000, 120000, 180000, 160000, 140000, 200000],
-        ]);
+        // Total slots
+        $totalSlots = Slot::count();
+
+        // Occupied slots
+        $occupiedSlots = Slot::where('is_occupied', true)->count();
+
+        // Total revenue this month
+        $totalRevenue = Parking::whereMonth('created_at', now()->month)->sum('bill');
+
+        // Active tickets
+        $activeTickets = Parking::where('status', 'active')->count();
+
+        // Occupancy by zone
+        $zones = Zone::withCount([
+            'slots as occupied_count' => function ($query) {
+                $query->where('is_occupied', true);
+            }
+        ])->get();
+        $zoneNames = $zones->pluck('name');
+        $occupancyCounts = $zones->pluck('occupied_count');
+
+        // Revenue trends (last 6 months)
+        $monthlyRevenue = Payment::selectRaw('MONTH(created_at) as month, SUM(amount) as total')
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+        $months = $monthlyRevenue->map(fn($item) => date('F', mktime(0, 0, 0, $item->month, 1)));
+        $revenues = $monthlyRevenue->pluck('total');
+
+        // Today's revenue
+        $todaysRevenue = Parking::whereDate('created_at', today())->sum('bill');
+
+        // Today's transaction count
+        $todaysTransactions = Parking::whereDate('created_at', today())->count();
+
+        // Most used zone this week
+        $mostUsedZone = Parking::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->selectRaw('zone_id, COUNT(*) as count')
+            ->groupBy('zone_id')
+            ->with('zone')
+            ->orderByDesc('count')
+            ->first();
+
+        // Average parking duration today
+        $avgDuration = Parking::whereDate('created_at', today())
+            ->whereNotNull('exit_time')
+            ->get()
+            ->map(function ($item) {
+                return Carbon::parse($item->created_at)->diffInMinutes(Carbon::parse($item->exit_time));
+            })
+            ->average();
+
+        // Exempted vehicles count
+        $exemptedCount = Parking::where('status', 'exempt')->count();
+
+        return view('dashboard', compact(
+            'totalSlots',
+            'occupiedSlots',
+            'totalRevenue',
+            'activeTickets',
+            'zoneNames',
+            'occupancyCounts',
+            'months',
+            'revenues',
+            'todaysRevenue',
+            'todaysTransactions',
+            'mostUsedZone',
+            'avgDuration',
+            'exemptedCount'
+        ));
     }
 
     /**

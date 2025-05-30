@@ -1,15 +1,16 @@
-@extends('layouts.user')
+@extends('layouts.admin')
 
 @section('content')
 <div class="container">
     <h2>Entry & Exit Logs</h2>
     <p>View all parking logs including entry and exit times, payment methods, and statuses.</p>
-    <hr>
 
     {{-- Add New Car Entry --}}
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
-    @endif 
+    @endif
+    
+
 
     <table id="datatable" class="table table-striped">
         <thead class="thead-dark">
@@ -24,7 +25,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($parkings as $key=>$log)
+            @foreach($parkingLogs as $key=>$log)
                 <tr>
                     <td>{{ $key+1 }}</td>
                     <td>{{ $log->plate_number }}</td>
