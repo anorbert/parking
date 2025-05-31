@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Auth;
 use Log;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 
 class LoginController extends Controller
@@ -26,6 +28,8 @@ class LoginController extends Controller
     public function create()
     {
         //
+        $user= Auth::user();
+        return view('change-pin', compact('user'));
     }
 
     /**
@@ -45,12 +49,17 @@ class LoginController extends Controller
             'password' => $request->pin, // still called password in DB
         ];
 
+        // Check if 'remember' checkbox is checked
         $remember = $request->has('remember');
 
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
             Log::info('User logged in successfully. User ID: ' . $user->id);
-
+            //check if pin is 1234 and redirect to change pin page
+            if ($credentials['password'] === '1234') {
+                Log::info('User attempted to login with default pin. Phone: ' . $request->phone);
+                return redirect()->route('user.change-pin.create')->with('warning', 'Please change your default PIN.');
+            }
             // Redirect based on role
             switch ($user->role_id) {
                 case 1:
@@ -93,6 +102,26 @@ class LoginController extends Controller
     public function update(Request $request, string $id)
     {
         //
+         $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|string|min:4|max:4|confirmed',
+        ]);
+
+        $user = User::findOrFail($id);
+        // Check if the current password matches
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Current password does not match']);
+        }
+        $user->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+        Log::info('User PIN changed successfully. User ID: ' . $user->id);
+         // Redirect to the change PIN page with a success message
+         session()->flash('success', 'PIN changed successfully. Please log in again.');
+        // returning to login page with success message
+        Auth::logout(); // Log out the user after changing PIN
+        return redirect()->route('welcome')->with('success', 'PIN changed successfully. Please log in again.');
+
     }
 
     /**

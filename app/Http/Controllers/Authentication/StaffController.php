@@ -41,7 +41,7 @@ class StaffController extends Controller
         }
 
         // Set a 4-digit random PIN or use default (you may customize this logic)
-        $defaultPin = rand(1000, 9999);
+        $defaultPin = 1234;
 
         $user = User::create([
             'name'         => $request->name,

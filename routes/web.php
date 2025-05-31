@@ -32,11 +32,11 @@ Route::get('/', function () {
 
 Route::resource('user_login',LoginController::class);
 
-
 Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::resource('vehicles', ExemptedVehicleController::class);
     Route::resource('payments', PaymentController::class);
     Route::resource('reports', UserReportController::class);
+    Route::resource('change-pin', LoginController::class);
 });
 
 // Route::get('/dashboard', function () {
