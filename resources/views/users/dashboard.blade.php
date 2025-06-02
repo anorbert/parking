@@ -39,8 +39,8 @@
   <div class="card">
     <div class="card-header">Currently Parked Vehicles</div>
     <div class="card-body">
-      <table class="table table-bordered table-striped">
-        <thead>
+      <table id="datatable" class="table table-bordered table-striped">
+        <thead class="thead-dark">
           <tr>
             <th>Plate</th>
             <th>Entry Time</th>

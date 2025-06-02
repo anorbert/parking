@@ -120,7 +120,7 @@ class LoginController extends Controller
          session()->flash('success', 'PIN changed successfully. Please log in again.');
         // returning to login page with success message
         Auth::logout(); // Log out the user after changing PIN
-        return redirect()->route('welcome')->with('success', 'PIN changed successfully. Please log in again.');
+        return redirect()->route('/')->with('success', 'PIN changed successfully. Please log in again.');
 
     }
 
