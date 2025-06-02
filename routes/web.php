@@ -31,6 +31,8 @@ Route::get('/', function () {
 });
 
 Route::resource('user_login',LoginController::class);
+Route::resource('user_register',RegisterController::class);
+Route::get('/user_register', [RegisterController::class, 'index'])->name('user_register');
 
 Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::resource('vehicles', ExemptedVehicleController::class);
@@ -38,6 +40,15 @@ Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::resource('reports', UserReportController::class);
     Route::resource('change-pin', LoginController::class);
 });
+
+// Login routes
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+
+// Register routes
+Route::get('/register', [RegisterController::class, 'index'])->name('register');
+Route::post('/register', [RegisterController::class, 'register']);
+
 
 // Route::get('/dashboard', function () {
 //     return view('dashboard');
