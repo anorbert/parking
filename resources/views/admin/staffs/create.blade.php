@@ -39,8 +39,8 @@
         </div>
 
         <div class="mb-3">
-            <label for="role_id" class="form-label">Select Zone (Optional)</label>
-            <select name="zone_id" class="form-control" required>
+            <label for="zone_id" class="form-label">Select Zone (Optional)</label>
+            <select name="zone_id" class="form-control">
                 <option value="">-- Select Zone --</option>
                 @foreach($zones as $zone)
                     <option value="{{ $zone->id }}">{{ $zone->name }}</option>
