@@ -31,14 +31,6 @@
                 <div class="col-md-3">
                     <input type="date" class="form-control" name="expired_at" placeholder="Select Expiration Time">
                 </div>
-                {{-- <div class="col-md-3">
-                    <select name="vehicle_type" class="form-control" required>
-                        <option value="">Select Vehicle Type</option>
-                        <option value="Car">Car</option>
-                        <option value="Motorcycle">Motorcycle</option>
-                        <option value="Truck">Truck</option>
-                    </select>
-                </div> --}}
                 <div class="col-md-3">
                     <input type="text" class="form-control" name="reason" placeholder="Reason (e.g. Staff, Gov)">
                 </div>

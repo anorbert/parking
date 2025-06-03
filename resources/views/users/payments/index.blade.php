@@ -10,7 +10,7 @@
   <div class="x_content">
 
     {{-- Filter Form --}}
-    <form method="GET" action="{{ route('admin.payments.index') }}" class="form-inline mb-4">
+    <form method="GET" action="{{ route('user.payments.index') }}" class="form-inline mb-4">
       <div class="form-group mr-3">
         <label for="start_date" class="mr-2">Start Date:</label>
         <input type="date" name="start_date" id="start_date" class="form-control" value="{{ request('start_date') }}">

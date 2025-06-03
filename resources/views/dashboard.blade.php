@@ -23,7 +23,7 @@
       <span class="count_bottom"><i class="red"><i class="fa fa-sort-desc"></i> 5% </i> Today</span>
     </div>
     <div class="col-md-4 col-sm-4 tile_stats_count">
-      <span class="count_top"><i class="fa fa-money-bill-wave"></i> Total Revenue</span>
+      <span class="count_top"><i class="fa fa-money-bill-wave"></i> Total Daily Revenue</span>
       <div class="count green">{{ number_format($totalRevenue ?? 0) }} Rwf</div>
       <span class="count_bottom"><i class="green"><i class="fa fa-sort-asc"></i>15% </i> This Month</span>
     </div>
