@@ -29,7 +29,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <input type="date" class="form-control" name="expired_at" placeholder="Select Expiration Time" required>
+                    <input type="date" class="form-control" name="expired_at" placeholder="Select Expiration Time">
                 </div>
                 {{-- <div class="col-md-3">
                     <select name="vehicle_type" class="form-control" required>
