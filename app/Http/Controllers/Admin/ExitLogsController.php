@@ -15,7 +15,7 @@ class ExitLogsController extends Controller
     public function index()
     {
         //
-        $parkingLogs = Parking::where('status', 'inactive')->get();
+        $parkingLogs = Parking::get();
         return view('admin.logs.index', compact('parkingLogs'));
     }
 
