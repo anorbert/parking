@@ -106,176 +106,45 @@ class ParkingController extends Controller
         return back()->with('success', 'Car exited successfully.');
     }
 
-    public function exit(Request $request, $id)
-    {
-        $request->validate([
-            'payment_method' => 'in:cash,momo',
-            'phone_number' => 'nullable|min:10',
-            'amount' => 'required|numeric',
-        ]);
-
-        if (!Auth::check()) {
-            return back()->with('error', 'You must be logged in to exit a parking.');
-        }
-
-        Log::info("Exiting parking for ID: $id by user: " . Auth::id());
-
-        $parking = Parking::where('id', $id)
-            ->whereNull('exit_time')
-            ->latest()
-            ->first();
-
-        if (!$parking) {
-            return back()->with('error', 'Active parking not found.');
-        }
-
-        $exitTime = now();
-        $entryTime = Carbon::parse($parking->entry_time);
-        $duration = $entryTime->diffInMinutes($exitTime);
-        $amount = $request->amount;
-        $paymentMethod = $request->payment_method;
-        $phone = $request->phone_number;
-
-        if ($paymentMethod === 'momo') {
-            $bank = Bank::where('payment_owner', 'FDI')->first();
-
-            if (!$bank) {
-                Log::error('Payment bank not configured for FDI.');
-                throw new \Exception('Payment hooks not available.');
-            }
-
-            // Check or retrieve token
-            $token = PaymentToken::where('bank_id', $bank->id)
-                ->where('expired_at', '>', now())
-                ->first();
-
-            if (!$token) {
-                $response = Http::post('https://payments-api.fdibiz.com/v2/auth', [
-                    'appId' => $bank->appId,
-                    'secret' => $bank->secret,
-                ]);
-
-                if ($response->successful()) {
-                    $data = $response->json();
-
-                    $token = PaymentToken::create([
-                        'bank_id' => $bank->id,
-                        'token' => $data['data']['token'],
-                        'expired_at' => $data['data']['expires_at'],
-                    ]);
-                } else {
-                    Log::error('Failed to retrieve token: ' . $response->body());
-                    throw new \Exception('Failed to retrieve token.');
-                }
-            }
-
-            // Detect operator
-            $number = preg_replace('/\D/', '', $phone);
-            $prefix = substr($number, -9, 2);
-            $trx_ref=Str::random(32);
-            $operator = match ($prefix) {
-                '78', '79' => 'momo-mtn-rw',
-                '72', '73' => 'momo-airtel-rw',
-                default => throw new \Exception('Invalid phone number for payment.'),
-            };
-
-            // Send MoMo payment request
-            $paymentResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token->token,
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->post('https://payments-api.fdibiz.com/v2/momo/pull', [
-                'trxRef' => $trx_ref,
-                'channelId' => $operator,
-                'accountId' => $bank->appId,
-                'msisdn' => '250' . substr($number, -9),
-                'amount' => $amount,
-                'callback' => 'http://94.72.112.148:8030/api/payment/callback',
-            ]);
-
-            $responseData = $paymentResponse->json();
-            Log::info('Payment response: ' . json_encode($responseData));
-            
-
-            if (isset($responseData['status']) && $responseData['status'] === 'fail') {
-                Log::error('Payment request failed: ' . ($responseData['message'] ?? 'Unknown error'));
-                throw new \Exception('Payment request failed: ' . ($responseData['message'] ?? 'Unknown error'));
-            }
-
-            // Save the payment response for logging or further processing
-            $paymentHistory = PaymentHistory::create([
-                'parking_id' => $parking->id,
-                'amount' => $amount,
-                'phone_number' => $phone,
-                'bank_id' => $bank->id,
-                'type' => 'MOMO',
-                'status' => 'Processing',
-                'channel' => $operator,
-                'description' => $responseData['message'] ?? 'Payment initiated',
-                'payment_method' => $paymentMethod,
-                'trx_ref' => $trx_ref,
-            ]);
-
-        }
-
-        // Final update
-        $parking->update([
-            'exit_time' => $exitTime,
-            'bill' => $amount,
-            'total_time' => $duration,
-            'status' => 'inactive',
-            'phone_number' => $phone ?? null,
-            'payment_method' => $paymentMethod,
-            'user_id' => Auth::id(),
-        ]);
-
-        return back()->with('success', "Car exited. Duration: $duration min. Billed: RWF " . number_format($amount, 2));
-    }
-
-
-    
     // public function exit(Request $request, $id)
     // {
     //     $request->validate([
-    //         'payment_method' => 'required|in:cash,momo',
-    //         'phone_number' => 'required_if:payment_method,momo|min:10',
-    //         'amount'  => 'required|numeric',
+    //         'payment_method' => 'in:cash,momo',
+    //         'phone_number' => 'nullable|min:10',
+    //         'amount' => 'required|numeric',
     //     ]);
-    //     // Check if the parking record exists and is active
+
     //     if (!Auth::check()) {
     //         return back()->with('error', 'You must be logged in to exit a parking.');
     //     }
-    //     if (!$id) {
-    //         return back()->with('error', 'Parking ID is required.');
-    //     }
-    //     // Find the parking record by ID and check if it is active
+
     //     Log::info("Exiting parking for ID: $id by user: " . Auth::id());
 
     //     $parking = Parking::where('id', $id)
-    //                     ->whereNull('exit_time')
-    //                     ->latest()
-    //                     ->first();
+    //         ->whereNull('exit_time')
+    //         ->latest()
+    //         ->first();
 
     //     if (!$parking) {
     //         return back()->with('error', 'Active parking not found.');
     //     }
 
-    //     $entryTime = Carbon::parse($parking->entry_time);
     //     $exitTime = now();
+    //     $entryTime = Carbon::parse($parking->entry_time);
     //     $duration = $entryTime->diffInMinutes($exitTime);
-
-    //     $zoneId = $parking->zone;
     //     $amount = $request->amount;
+    //     $paymentMethod = $request->payment_method;
+    //     $phone = $request->phone_number;
 
-    //     if ($request->payment_method === 'momo') {
-    //          // Retrieve Payment Hook
+    //     if ($paymentMethod === 'momo') {
     //         $bank = Bank::where('payment_owner', 'FDI')->first();
+
     //         if (!$bank) {
     //             Log::error('Payment bank not configured for FDI.');
     //             throw new \Exception('Payment hooks not available.');
     //         }
 
-    //         // Check valid token
+    //         // Check or retrieve token
     //         $token = PaymentToken::where('bank_id', $bank->id)
     //             ->where('expired_at', '>', now())
     //             ->first();
@@ -286,44 +155,31 @@ class ParkingController extends Controller
     //                 'secret' => $bank->secret,
     //             ]);
 
-    //             if ($response->status() == 200) {
+    //             if ($response->successful()) {
     //                 $data = $response->json();
 
     //                 $token = PaymentToken::create([
     //                     'bank_id' => $bank->id,
     //                     'token' => $data['data']['token'],
-    //                     'expired_at' => $data['data']['expires_at'], // Ensure this is in a datetime format
+    //                     'expired_at' => $data['data']['expires_at'],
     //                 ]);
     //             } else {
     //                 Log::error('Failed to retrieve token: ' . $response->body());
     //                 throw new \Exception('Failed to retrieve token.');
-
     //             }
     //         }
 
-    //         // Build payment info
-    //         $trx_ref = Str::random(32);
-    //         $amount = $request->amount;
-    //         $phone = $request->phone_number;
-
-    //         // Channel detection
-    //         $number = preg_replace('/\D/', '', $phone); // keep only digits
+    //         // Detect operator
+    //         $number = preg_replace('/\D/', '', $phone);
     //         $prefix = substr($number, -9, 2);
-    //         switch ($prefix) {
-    //             case '78':
-    //             case '79':
-    //                 $operator = 'momo-mtn-rw';
-    //                 break;
-    //             case '72':
-    //             case '73':
-    //                 $operator = 'momo-airtel-rw';
-    //                 break;
-    //             default:
-    //                 Log::error('Invalid phone number for payment: ' . $phone);
-    //                 throw new \Exception('Invalid phone number for payment.');
-    //         }
+    //         $trx_ref=Str::random(32);
+    //         $operator = match ($prefix) {
+    //             '78', '79' => 'momo-mtn-rw',
+    //             '72', '73' => 'momo-airtel-rw',
+    //             default => throw new \Exception('Invalid phone number for payment.'),
+    //         };
 
-    //         // Send payment request
+    //         // Send MoMo payment request
     //         $paymentResponse = Http::withHeaders([
     //             'Authorization' => 'Bearer ' . $token->token,
     //             'Content-Type' => 'application/json',
@@ -332,39 +188,157 @@ class ParkingController extends Controller
     //             'trxRef' => $trx_ref,
     //             'channelId' => $operator,
     //             'accountId' => $bank->appId,
-    //             'msisdn' => '250' . substr($phone, -9),
+    //             'msisdn' => '250' . substr($number, -9),
     //             'amount' => $amount,
-    //             'callback' => 'http://94.72.112.148:8030/api/donation/callback',
+    //             'callback' => 'http://94.72.112.148:8030/api/payment/callback',
     //         ]);
 
     //         $responseData = $paymentResponse->json();
     //         Log::info('Payment response: ' . json_encode($responseData));
-
+            
 
     //         if (isset($responseData['status']) && $responseData['status'] === 'fail') {
-    //             Log::error('Payment request failed: ' . $responseData['message'] ?? 'Unknown error');
-    //             throw new \Exception('Payment request failed: ' . $responseData['message'] ?? 'Unknown error');
-    //         } 
+    //             Log::error('Payment request failed: ' . ($responseData['message'] ?? 'Unknown error'));
+    //             throw new \Exception('Payment request failed: ' . ($responseData['message'] ?? 'Unknown error'));
+    //         }
 
-    //         // Update the record
-    //         $parking->update([
-    //             'exit_time' => $exitTime,
-    //             'bill' => $amount,
-    //             'user_id' => Auth::id(),
+    //         // Save the payment response for logging or further processing
+    //         $paymentHistory = PaymentHistory::create([
+    //             'parking_id' => $parking->id,
+    //             'amount' => $amount,
+    //             'phone_number' => $phone,
+    //             'bank_id' => $bank->id,
+    //             'type' => 'MOMO',
+    //             'status' => 'Processing',
+    //             'channel' => $operator,
+    //             'description' => $responseData['message'] ?? 'Payment initiated',
+    //             'payment_method' => $paymentMethod,
+    //             'trx_ref' => $trx_ref,
     //         ]);
+
     //     }
 
-    //     // Update the record
+    //     // Final update
     //     $parking->update([
     //         'exit_time' => $exitTime,
     //         'bill' => $amount,
+    //         'total_time' => $duration,
     //         'status' => 'inactive',
-    //         'phone_number' => $request->phone_number,
-    //         'payment_method' => $request->payment_method,
+    //         'phone_number' => $phone ?? null,
+    //         'payment_method' => $paymentMethod,
     //         'user_id' => Auth::id(),
     //     ]);
-    //     return back()->with('success', "Car exited. Billed amount: " . number_format($amount, 2));
+
+    //     return back()->with('success', "Car exited. Duration: $duration min. Billed: RWF " . number_format($amount, 2));
     // }
+
+    public function exit(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'in:cash,momo',
+            'phone_number' => 'nullable|min:10',
+            'amount' => 'required|numeric',
+        ]);
+
+        $parking = Parking::where('id', $id)->whereNull('exit_time')->firstOrFail();
+        $exitTime = now();
+        $entryTime = Carbon::parse($parking->entry_time);
+        $duration = $entryTime->diffInMinutes($exitTime);
+        $amount = $request->amount;
+        $paymentMethod = $request->payment_method;
+        $phone = $request->phone_number;
+
+        if ($paymentMethod === 'momo') {
+            $bank = Bank::where('payment_owner', 'FDI')->firstOrFail();
+            $token = PaymentToken::where('bank_id', $bank->id)->where('expired_at', '>', now())->first();
+
+            if (!$token) {
+                $res = Http::post('https://payments-api.fdibiz.com/v2/auth', [
+                    'appId' => $bank->appId,
+                    'secret' => $bank->secret,
+                ]);
+
+                if ($res->successful()) {
+                    $data = $res->json();
+                    $token = PaymentToken::create([
+                        'bank_id' => $bank->id,
+                        'token' => $data['data']['token'],
+                        'expired_at' => $data['data']['expires_at'],
+                    ]);
+                } else {
+                    return response()->json(['message' => 'Token retrieval failed'], 500);
+                }
+            }
+
+            $number = preg_replace('/\D/', '', $phone);
+            $prefix = substr($number, -9, 2);
+            $trx_ref = Str::random(32);
+            $operator = match ($prefix) {
+                '78', '79' => 'momo-mtn-rw',
+                '72', '73' => 'momo-airtel-rw',
+                default => null,
+            };
+
+            if (!$operator) {
+                return response()->json(['message' => 'Invalid phone number for payment.'], 422);
+            }
+
+            $res = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token->token,
+                'Content-Type' => 'application/json',
+            ])->post('https://payments-api.fdibiz.com/v2/momo/pull', [
+                'trxRef' => $trx_ref,
+                'channelId' => $operator,
+                'accountId' => $bank->appId,
+                'msisdn' => '250' . substr($number, -9),
+                'amount' => $amount,
+                'callback' => 'http://94.72.112.148:8030/api/payment/callback',
+            ]);
+
+            PaymentHistory::create([
+                'parking_id' => $parking->id,
+                'amount' => $amount,
+                'phone_number' => $phone,
+                'bank_id' => $bank->id,
+                'type' => 'MOMO',
+                'status' => 'Processing',
+                'channel' => $operator,
+                'description' => $res->json()['message'] ?? 'Payment initiated',
+                'payment_method' => $paymentMethod,
+                'trx_ref' => $trx_ref,
+            ]);
+
+            // Set the Parking to payment
+            $parking->update([
+                'exit_time' => $exitTime,
+                'bill' => $amount,
+                'total_time' => $duration,
+                'phone_number' => $phone ?? null,
+                'payment_method' => $paymentMethod,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment initiated.', 
+                'trx_ref' => $trx_ref]);
+        }
+
+        // Cash payment
+        $parking->update([
+            'exit_time' => $exitTime,
+            'bill' => $amount,
+            'total_time' => $duration,
+            'status' => 'inactive',
+            'phone_number' => $phone ?? null,
+            'payment_method' => $paymentMethod,
+            'user_id' => Auth::id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment complete.']);
+    }
 
     public function exitInfo($id)
     {
@@ -416,6 +390,29 @@ class ParkingController extends Controller
         ]);
     }
 
+    public function checkStatus(Request $request)
+    {
+        $request->validate([
+            'trx_ref' => 'required|string',
+        ]);
 
+        $transaction = PaymentHistory::where('trx_ref', $request->trx_ref)->first();
+
+        if (!$transaction) {
+            return response()->json(['status' => 'NotFound']);
+        }
+        if ($transaction->status === 'Completed') {
+            //Update the parking status to inactive
+            $parking = Parking::where('id', $transaction->parking_id)->first();
+            if ($parking) {
+                $parking->status = 'inactive';
+                $parking->phone_number = $transaction->phone_number;
+                $parking->payment_method = 'momo';
+                $parking->save();
+            }
+        }
+
+        return response()->json(['status' => $transaction->status]);
+    }
 
 }

@@ -50,7 +50,7 @@
           <td>{{ $mostUsedZone['name'] ?? 'N/A' }} ({{ $mostUsedZone['count'] ?? 0 }} visits)</td>
         </tr>
         <tr>
-          <td>Top Client</td>
+          <td>Top User</td>
           <td>{{ $topClient['name'] ?? 'N/A' }} ({{ $topClient['count'] ?? 0 }} parkings)</td>
         </tr>
         <tr>

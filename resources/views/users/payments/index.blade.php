@@ -67,6 +67,8 @@
       </tbody>
     </table>
 
+    http://94.72.112.148:8030/api/payment/callback
+
     {{-- Total Revenue --}}
     <div class="mt-4">
       <h4>Total Revenue: 

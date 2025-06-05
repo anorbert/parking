@@ -25,40 +25,12 @@
     <div class="col-md-4 col-sm-4 tile_stats_count">
       <span class="count_top"><i class="fa fa-money-bill-wave"></i> Total Daily Revenue</span>
       <div class="count green">{{ number_format($totalRevenue ?? 0) }} Rwf</div>
-      <span class="count_bottom"><i class="green"><i class="fa fa-sort-asc"></i>15% </i> This Month</span>
+      <span class="count_bottom"><i class="green"><i class="fa fa-sort-asc"></i></i> Today</span>
     </div>
     <div class="col-md-2 col-sm-4 tile_stats_count">
       <span class="count_top"><i class="fa fa-ticket-alt"></i> Active Tickets</span>
       <div class="count">{{ $activeTickets ?? '175' }}</div>
       <span class="count_bottom"><i class="red"><i class="fa fa-sort-desc"></i>2% </i> vs. Last Week</span>
-    </div>
-  </div>
-
-  <div class="row">
-    {{-- Occupancy by Zone --}}
-    <div class="col-md-6 col-sm-6">
-      <div class="x_panel">
-        <div class="x_title">
-          <h2>Occupancy by Zone</h2>
-          <div class="clearfix"></div>
-        </div>
-        <div class="x_content">
-          <canvas id="occupancyChart" height="150"></canvas>
-        </div>
-      </div>
-    </div>
-
-    {{-- Revenue Chart --}}
-    <div class="col-md-6 col-sm-6">
-      <div class="x_panel">
-        <div class="x_title">
-          <h2>Revenue Trends</h2>
-          <div class="clearfix"></div>
-        </div>
-        <div class="x_content">
-          <canvas id="revenueChart" height="150"></canvas>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -91,9 +63,14 @@
                 <td>Today</td>
               </tr>
               <tr>
-                <td><i class="fa fa-map-marker-alt"></i> Most Used Zone</td>
-                <td><strong>{{ $mostUsedZone->zone->name ?? 'N/A' }} ({{ $mostUsedZone->count ?? 0 }} uses)</strong></td>
-                <td>This Week</td>
+                <td><i class="fa fa-receipt"></i> MOMO Revenue </td>
+                <td><strong>{{ $momo ?? 0 }}</strong></td>
+                <td>Today</td>
+              </tr>
+              <tr>
+                <td><i class="fa fa-receipt"></i> CASH Revenue</td>
+                <td><strong>{{ $cash ?? 0 }}</strong></td>
+                <td>Today</td>
               </tr>
               <tr>
                 <td><i class="fa fa-clock"></i> Avg. Parking Duration</td>

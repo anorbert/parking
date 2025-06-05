@@ -58,8 +58,8 @@ class AdminReportController extends Controller
         $avgDuration = $durations->count() ? round($durations->avg()) : 0;
 
         // Payment method breakdown
-        $cashPayments = $filtered->where('payment_method', 'cash')->count();
-        $momoPayments = $filtered->where('payment_method', 'momo')->count();
+        $cashPayments = $filtered->where('payment_method', 'cash')->sum('bill');
+        $momoPayments = $filtered->where('payment_method', 'momo')->sum('bill');
 
         // Exempted vehicles count (only count if currently valid)
         $exemptedCount = Vehicle::where(function ($q) {

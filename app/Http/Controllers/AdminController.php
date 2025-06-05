@@ -22,8 +22,17 @@ class AdminController extends Controller
         // Occupied slots
         $occupiedSlots = Slot::where('is_occupied', true)->count();
 
-        // Total revenue this month
-        $totalRevenue = Parking::whereMonth('created_at', now()->month)->sum('bill');
+        // Total revenue Today
+        $totalRevenue = Parking::whereDay('created_at', now()->day)->sum('bill');
+
+        // Total revenue MOMO
+        $momo = Parking::whereDay('created_at', now()
+                                ->where('payment_method', 'momo')
+                                ->day)->sum('bill');
+        // Total revenue Cash
+        $cash = Parking::whereDay('created_at', now()
+                                ->where('payment_method', 'cash')
+                                ->day)->sum('bill');
 
         // Active tickets
         $activeTickets = Parking::where('status', 'active')->count();
@@ -85,7 +94,9 @@ class AdminController extends Controller
             'todaysTransactions',
             'mostUsedZone',
             'avgDuration',
-            'exemptedCount'
+            'exemptedCount',
+            'momo',
+            'cash'
         ));
     }
 

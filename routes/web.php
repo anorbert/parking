@@ -69,6 +69,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/parking/exit/{id}', [ParkingController::class, 'exit'])->name('parking.exit');
     Route::get('/parking/exit-info/{id}', [ParkingController::class, 'exitInfo']);
 
+    // Route::get('/payment/status/{trx_ref}', [ParkingController::class, 'checkStatus'])->name('check.payment.status');
+
+  
+
+
+
+
     Route::resource('parkings',ParkingController::class);   
 
 

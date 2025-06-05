@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Parking;
 use Illuminate\Support\Facades\Auth;
+use App\Models\PaymentHistory;
+use Illuminate\Support\Facades\Log; // Uncomment this line if you want to use logging
 
 class PaymentController extends Controller
 {
@@ -131,7 +133,11 @@ class PaymentController extends Controller
                 // Log::info('Bank balance updated:', $bank->balance);
                 
                 // Update the transaction status to Completed
-                $transaction->update(['status' => 'Completed','gwRef'=>$gwRef]);      
+                $transaction->update([
+                    'status' => 'Completed',
+                    'gwRef'=>$gwRef,
+                    'description' => 'Transaction completed successfully.',
+                ]);      
                 
                 return response()->json(['message' => 'Transaction successfully processed.'], 200);
             }
