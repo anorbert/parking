@@ -22,6 +22,7 @@
                 <th>Payment Mode</th>
                 <th>Payment Status</th>                
                 <th>Parking Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -34,6 +35,16 @@
                     <td>{{ $log->payment_method }}</td>
                     <td>{{ $log->bill }}</td>
                     <td>{{ $log->status }}</td>
+                    <td>
+                        @if($log->status == 'active')
+                            <form action="{{ route('admin.logs.destroy', $log->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif  
+                    </td>
                 </tr>
             @endforeach
         </tbody>

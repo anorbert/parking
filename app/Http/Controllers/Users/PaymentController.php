@@ -148,8 +148,7 @@ class PaymentController extends Controller
                 }else {
                     Log::error('Parking not found for transaction:', $trxRef);
                     // return response()->json(['message' => 'Parking not found.'], 404);
-                }
-                
+                }           
                 
                 
                 return response()->json(['message' => 'Transaction successfully processed.'], 200);

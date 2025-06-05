@@ -65,5 +65,9 @@ class ExitLogsController extends Controller
     public function destroy(string $id)
     {
         //
+        $parkingLog = Parking::findOrFail($id);
+        $parkingLog->update(['status' => 'inactive']);
+        $parkingLog->delete();
+        return redirect()->route('admin.logs.index')->with('success', 'Exit log deleted successfully.');
     }
 }
