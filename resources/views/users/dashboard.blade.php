@@ -268,24 +268,23 @@
           fetch(`{{ url('/api/check-payment-status') }}?trx_ref=${trxRef}`)
               .then(res => res.json())
               .then(data => {
-                  if (data.status === 'Completed') {
-                      clearInterval(pollingInterval);
-                      statusText.textContent = 'Payment completed!';
-                      statusText.style.color = 'green';
-                      setTimeout(() => {
-                          const modalEl = document.getElementById('exitModal');
-                          const modal = bootstrap.Modal.getInstance(modalEl);
-                          modal.hide();
-                          location.reload();
-                      }, 1500);
-                  } else if (data.status === 'Failed') {
-                      clearInterval(pollingInterval);
-                      statusText.textContent = 'Payment failed.';
-                      statusText.style.color = 'red';
-                      setTimeout(() => {
-                          statusText.remove();
-                      }, 2500);
-                  }
+                if (data.status === 'Completed') {
+                    clearInterval(pollingInterval);
+                    statusText.textContent = 'Payment completed!';
+                    statusText.style.color = 'green';
+                    setTimeout(() => {
+                        $('#exitModal').modal('hide');
+                        location.reload();
+                    }, 1000);
+                } 
+                else if (data.status === 'Failed') {
+                    clearInterval(pollingInterval);
+                    statusText.textContent = 'Payment failed.';
+                    statusText.style.color = 'red';
+                    setTimeout(() => {
+                        statusText.remove();
+                    }, 2500);
+                }
               })
               .catch(() => {
                   statusText.textContent = 'Error checking payment. Retrying...';
