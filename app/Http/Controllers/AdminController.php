@@ -26,13 +26,13 @@ class AdminController extends Controller
         $totalRevenue = Parking::whereDay('created_at', now()->day)->sum('bill');
 
         // Total revenue MOMO
-        $momo = Parking::whereDay('created_at', now()
-                                ->where('payment_method', 'momo')
-                                ->day)->sum('bill');
+        $momo = Parking::where('payment_method', 'momo')
+                        ->whereDay('created_at', now()->day)
+                        ->sum('bill');
         // Total revenue Cash
-        $cash = Parking::whereDay('created_at', now()
-                                ->where('payment_method', 'cash')
-                                ->day)->sum('bill');
+        $cash = Parking::where('payment_method', 'cash')
+                        ->whereDay('created_at', now()->day)
+                        ->sum('bill');
 
         // Active tickets
         $activeTickets = Parking::where('status', 'active')->count();
@@ -77,10 +77,8 @@ class AdminController extends Controller
                 return Carbon::parse($item->created_at)->diffInMinutes(Carbon::parse($item->exit_time));
             })
             ->average();
-
         // Exempted vehicles count
         $exemptedCount = Parking::where('status', 'exempt')->count();
-
         return view('dashboard', compact(
             'totalSlots',
             'occupiedSlots',
