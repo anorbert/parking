@@ -37,7 +37,7 @@
                     <td>{{ $log->status }}</td>
                     <td>
                         @if($log->status == 'active')
-                            <form action="{{ route('admin.logs.destroy', $log->id) }}" method="POST" style="display:inline;">
+                            <form action="{{ route('logs.destroy', $log->id) }}" method="POST" style="display:inline;">
                                 @csrf
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                             </form>
