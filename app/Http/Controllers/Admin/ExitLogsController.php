@@ -16,7 +16,7 @@ class ExitLogsController extends Controller
     {
         //
         $parkingLogs = Parking::get();
-        return view('admin.logs.index', compact('parkingLogs'));
+        return view('logs.index', compact('parkingLogs'));
     }
 
     /**
