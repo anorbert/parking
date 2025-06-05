@@ -39,6 +39,7 @@
                         @if($log->status == 'active')
                             <form action="{{ route('logs.destroy', $log->id) }}" method="POST" style="display:inline;">
                                 @csrf
+                                @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                             </form>
                         @else
