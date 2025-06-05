@@ -16,7 +16,7 @@ class ExitLogsController extends Controller
     {
         //
         $parkingLogs = Parking::get();
-        return view('logs.index', compact('parkingLogs'));
+        return view('admin.logs.index', compact('parkingLogs'));
     }
 
     /**
@@ -68,6 +68,6 @@ class ExitLogsController extends Controller
         $parkingLog = Parking::findOrFail($id);
         $parkingLog->update(['status' => 'inactive']);
         $parkingLog->delete();
-        return redirect()->route('admin.logs.index')->with('success', 'Exit log deleted successfully.');
+        return redirect()->route('logs.index')->with('success', 'Exit log deleted successfully.');
     }
 }
