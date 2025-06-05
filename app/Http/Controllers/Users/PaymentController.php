@@ -117,6 +117,8 @@ class PaymentController extends Controller
             }
 
             if ($status === 'success' && $state === 'successful') {
+
+                
                 // Log::info('Transaction successful:', $trxRef);
                 $bank = $transaction->bank;
                 if (!$bank) {
@@ -137,7 +139,18 @@ class PaymentController extends Controller
                     'status' => 'Completed',
                     'gwRef'=>$gwRef,
                     'description' => 'Transaction completed successfully.',
-                ]);      
+                ]);  
+
+                $parking= Parking::FindOrFail($transaction->parking_id);
+                if ($parking) {
+                    $parking->status = 'inactive';
+                    $parking->save();
+                }else {
+                    Log::error('Parking not found for transaction:', $trxRef);
+                    // return response()->json(['message' => 'Parking not found.'], 404);
+                }
+                
+                
                 
                 return response()->json(['message' => 'Transaction successfully processed.'], 200);
             }
