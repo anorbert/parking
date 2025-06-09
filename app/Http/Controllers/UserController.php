@@ -16,7 +16,10 @@ class UserController extends Controller
     public function index()
     {
         //
-        $activeParkings = Parking::where('status', 'active')->get();
+        $activeParkings = Parking::where('status', 'active')
+                                ->where('zone_id', Auth::user()->zone_id)
+                                ->whereNull('exit_time')
+                                ->get();
         return view('users.dashboard', compact('activeParkings'));
     }
 

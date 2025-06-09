@@ -167,7 +167,7 @@ class ParkingController extends Controller
                 'accountId' => $bank->appId,
                 'msisdn' => '250' . substr($number, -9),
                 'amount' => $amount,
-                'callback' => 'http://94.72.112.148:8030/api/payment/callback',
+                'callback' => 'http://94.72.112.148:8020/api/payment/callback',
             ]);
 
             PaymentHistory::create([
