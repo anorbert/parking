@@ -16,16 +16,21 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use App\Models\PaymentHistory;
 use App\Models\Vehicle;
+use App\Services\ParkingService;
 
 class ParkingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    protected ParkingService $parkingService;
+
+    public function __construct(ParkingService $parkingService)
+    {
+        $this->parkingService = $parkingService;
+    }
+
     public function index()
     {
-        //
-        $parkings = Parking::where('zone_id', Auth::user()->zone_id) // Assuming user has zone_id
+        $parkings = Parking::where('zone_id', Auth::user()->zone_id)
+                    ->where('company_id', Auth::user()->company_id)
                     ->latest()
                     ->get();
         return view('users.parkings.index', compact('parkings'));
@@ -44,29 +49,20 @@ class ParkingController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $request->validate([
             'plate_number' => 'required|string|max:255',
         ]);
 
-        // Check if vehicle is already parked (no exit time)
-        $existing = Parking::where('plate_number', $request->plate_number)
-            ->whereNull('exit_time')
-            ->first();
-
-        if ($existing) {
-            return back()->with('error', 'This vehicle is already parked.');
+        try {
+            $this->parkingService->entry(
+                $request->plate_number,
+                Auth::user()->zone_id,
+                Auth::user()->company_id
+            );
+            return back()->with('success', 'Car entered successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-        // return Auth::user()->zone_id;
-        Parking::create([
-            'plate_number' => $request->plate_number,
-            'entry_time' => Carbon::now(),
-            'zone_id' => Auth::user()->zone_id, // Assuming the zone is associated with the user
-            // Optionally add 'zone' if provided
-            'user_id' => Auth::id(), // Assuming you want to associate the parking with the logged-in user
-        ]);
-
-        return back()->with('success', 'Car entered successfully.');
     }
 
     /**
@@ -106,7 +102,6 @@ class ParkingController extends Controller
         return back()->with('success', 'Car exited successfully.');
     }
 
-    
     public function exit(Request $request, $id)
     {
         $request->validate([
@@ -115,154 +110,28 @@ class ParkingController extends Controller
             'amount' => 'required|numeric',
         ]);
 
-        $parking = Parking::where('id', $id)->whereNull('exit_time')->firstOrFail();
-        $exitTime = now();
-        $entryTime = Carbon::parse($parking->entry_time);
-        $duration = $entryTime->diffInMinutes($exitTime);
-        $amount = $request->amount;
-        $paymentMethod = $request->payment_method;
-        $phone = $request->phone_number;
-
-        if ($paymentMethod === 'momo') {
-            $bank = Bank::where('payment_owner', 'FDI')->firstOrFail();
-            $token = PaymentToken::where('bank_id', $bank->id)->where('expired_at', '>', now())->first();
-
-            if (!$token) {
-                $res = Http::post('https://payments-api.fdibiz.com/v2/auth', [
-                    'appId' => $bank->appId,
-                    'secret' => $bank->secret,
-                ]);
-
-                if ($res->successful()) {
-                    $data = $res->json();
-                    $token = PaymentToken::create([
-                        'bank_id' => $bank->id,
-                        'token' => $data['data']['token'],
-                        'expired_at' => $data['data']['expires_at'],
-                    ]);
-                } else {
-                    return response()->json(['message' => 'Token retrieval failed'], 500);
-                }
-            }
-
-            $number = preg_replace('/\D/', '', $phone);
-            $prefix = substr($number, -9, 2);
-            $trx_ref = Str::random(32);
-            $operator = match ($prefix) {
-                '78', '79' => 'momo-mtn-rw',
-                '72', '73' => 'momo-airtel-rw',
-                default => null,
-            };
-
-            if (!$operator) {
-                return response()->json(['message' => 'Invalid phone number for payment.'], 422);
-            }
-
-            $res = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token->token,
-                'Content-Type' => 'application/json',
-            ])->post('https://payments-api.fdibiz.com/v2/momo/pull', [
-                'trxRef' => $trx_ref,
-                'channelId' => $operator,
-                'accountId' => $bank->appId,
-                'msisdn' => '250' . substr($number, -9),
-                'amount' => $amount,
-                'callback' => 'http://94.72.112.148:8020/api/payment/callback',
-            ]);
-
-            PaymentHistory::create([
-                'parking_id' => $parking->id,
-                'amount' => $amount,
-                'phone_number' => $phone,
-                'bank_id' => $bank->id,
-                'type' => 'MOMO',
-                'status' => 'Processing',
-                'channel' => $operator,
-                'description' => $res->json()['message'] ?? 'Payment initiated',
-                'payment_method' => $paymentMethod,
-                'trx_ref' => $trx_ref,
-            ]);
-
-            // Set the Parking to payment
-            $parking->update([
-                'exit_time' => $exitTime,
-                'bill' => $amount,
-                'total_time' => $duration,
-                'phone_number' => $phone ?? null,
-                'payment_method' => $paymentMethod,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment initiated.', 
-                'trx_ref' => $trx_ref]);
+        try {
+            $result = $this->parkingService->exit(
+                $id,
+                $request->payment_method,
+                $request->phone_number,
+                $request->amount
+            );
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('Parking exit failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
-
-        // Cash payment
-        $parking->update([
-            'exit_time' => $exitTime,
-            'bill' => $amount,
-            'total_time' => $duration,
-            'status' => 'inactive',
-            'phone_number' => $phone ?? null,
-            'payment_method' => $paymentMethod,
-            'user_id' => Auth::id(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment complete.']);
     }
 
     public function exitInfo($id)
     {
-        $parking = Parking::with('zone')->find($id); // assuming relation is zoneRelation
-
-        if (!$parking || $parking->exit_time) {
-            return response()->json(['success' => false, 'message' => 'Parking not found or already exited.']);
+        try {
+            $result = $this->parkingService->getExitInfo($id);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
-
-        $entryTime = Carbon::parse($parking->entry_time);
-        $exitTime = now();
-        $duration = $entryTime->diffInMinutes($exitTime);
-
-        $exemptedVehicle = Vehicle::where('plate_number', $parking->plate_number)
-            ->first();
-
-        $isExempted = false;
-
-        if ($exemptedVehicle) {
-            // Check if exempted and still valid
-            if (
-                $exemptedVehicle->billing_type != 'free' &&
-                Carbon::parse($exemptedVehicle->expired_at)->isFuture()
-            ) {
-                $isExempted = true;
-            }
-        }
-
-        // Determine payment amount
-        if ($isExempted) {
-            $amount = 0;
-        } else {
-            $rate = ParkingRate::where('zone_id', $parking->zone_id)
-                ->where('duration_minutes', '<=', $duration)
-                ->orderByDesc('duration_minutes')
-                ->first();
-
-            $amount = $rate ? $rate->rate : 0;
-        }
-
-        return response()->json([
-            'success' => true,
-            'plate_number' => $parking->plate_number,
-            'zone_name' => optional($parking->zone)->name,
-            'entry_time' => $entryTime->toDateTimeString(),
-            'exit_time' => $exitTime->toDateTimeString(),
-            'duration' => floor($duration / 60) . ' hr ' . ($duration % 60),
-            'amount' => $amount,
-        ]);
     }
 
     public function checkStatus(Request $request)

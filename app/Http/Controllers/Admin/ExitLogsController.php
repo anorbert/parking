@@ -14,8 +14,8 @@ class ExitLogsController extends Controller
      */
     public function index()
     {
-        //
-        $parkingLogs = Parking::get();
+        $companyId = auth()->user()->company_id;
+        $parkingLogs = Parking::where('company_id', $companyId)->latest()->get();
         return view('admin.logs.index', compact('parkingLogs'));
     }
 

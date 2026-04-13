@@ -18,13 +18,15 @@
     <link href="{{ asset('gentelella/vendors/nprogress/nprogress.css') }}" rel="stylesheet">
     <!-- Custom Theme Style -->
     <link href="{{ asset('gentelella/build/css/custom.min.css') }}" rel="stylesheet">
+    @stack('styles')
 </head>
-<body>
+<body class="@yield('body-class')">
     @yield('content')
 
     <!-- Scripts -->
     <script src="{{ asset('gentelella/vendors/jquery/dist/jquery.min.js') }}"></script>
     <script src="{{ asset('gentelella/vendors/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('gentelella/build/js/custom.min.js') }}"></script>
+    @stack('scripts')
 </body>
 </html>

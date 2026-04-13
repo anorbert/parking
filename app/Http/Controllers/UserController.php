@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Parking;
+use App\Models\Slot;
 use App\Models\User;
 use Auth;
+use Carbon\Carbon;
 use Log;
 
 class UserController extends Controller
@@ -15,12 +17,24 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        $user = Auth::user();
+
         $activeParkings = Parking::where('status', 'active')
-                                ->where('zone_id', Auth::user()->zone_id)
+                                ->where('zone_id', $user->zone_id)
+                                ->where('company_id', $user->company_id)
                                 ->whereNull('exit_time')
                                 ->get();
-        return view('users.dashboard', compact('activeParkings'));
+
+        $totalSlots = Slot::where('zone_id', $user->zone_id)
+                          ->count();
+
+        $todayRevenue = Parking::where('zone_id', $user->zone_id)
+                               ->where('company_id', $user->company_id)
+                               ->whereNotNull('exit_time')
+                               ->whereDate('exit_time', Carbon::today())
+                               ->sum('bill');
+
+        return view('users.dashboard', compact('activeParkings', 'totalSlots', 'todayRevenue'));
     }
 
     /**

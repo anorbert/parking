@@ -15,10 +15,20 @@ class Zone extends Model
      *
      * @var array
      */
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'company_id', 'total_slots'];
 
     public function slots()
     {
         return $this->hasMany(Slot::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function parkingRates()
+    {
+        return $this->hasMany(ParkingRate::class);
     }
 }

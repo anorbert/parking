@@ -14,9 +14,9 @@ class VehicleController extends Controller
      */
     public function index()
     {
-        //
-        $vehicles = Vehicle::all();
-        return view('admin.vehicles.index',compact('vehicles')); // Placeholder view
+        $companyId = auth()->user()->company_id;
+        $vehicles = Vehicle::where('company_id', $companyId)->get();
+        return view('admin.vehicles.index', compact('vehicles'));
     }
 
     /**
@@ -56,6 +56,7 @@ class VehicleController extends Controller
                 'owner_contact' => $request->owner_contact,
                 'billing_type' => $request->billing_type ?? 'Free',
                 'reason' => $request->reason,
+                'company_id' => auth()->user()->company_id,
             ]
         );
         if (!$vehicle) {
@@ -80,11 +81,8 @@ class VehicleController extends Controller
      */
     public function edit(string $id)
     {
-        //
-        return $id;
-
-        $vehicle = Vehicle::findOrFail($id);
-        return view('admin.vehicles.edit', compact('vehicle', 'rates')); // Placeholder view
+        $vehicle = Vehicle::where('company_id', auth()->user()->company_id)->findOrFail($id);
+        return view('admin.vehicles.edit', compact('vehicle'));
     }
 
     /**

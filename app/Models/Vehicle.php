@@ -16,9 +16,15 @@ class Vehicle extends Model
         'billing_type',
         'reason',
         'expired_at',
+        'company_id',
     ];
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

@@ -14,7 +14,7 @@ class DashboardController extends Controller
     public function index()
     {
         //
-        return view('dashboard', [
+        return view('admin.dashboard', [
         'totalSlots' =>0,
         'occupiedSlots' => 0,
         'totalRevenue' => 0,

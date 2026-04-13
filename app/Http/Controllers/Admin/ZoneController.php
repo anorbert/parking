@@ -16,11 +16,10 @@ class ZoneController extends Controller
      */
     public function index()
     {
-        //
-        $zones = Zone::with('slots')->get();
-        $users = User::where('role_id',3)->get();
+        $companyId = auth()->user()->company_id;
+        $zones = Zone::where('company_id', $companyId)->with('slots')->get();
+        $users = User::where('role_id', 3)->where('company_id', $companyId)->get();
         return view('admin.zones.index', compact('zones', 'users'));
-
     }
 
     /**
@@ -53,6 +52,7 @@ class ZoneController extends Controller
         Zone::create([
             'name' => $request->name,
             'capacity' => $request->capacity,
+            'company_id' => auth()->user()->company_id,
         ]);
 
         return back()->with('success', 'Zone added successfully.');
@@ -95,7 +95,7 @@ class ZoneController extends Controller
             'name' => $request->name,
             'capacity' => $request->capacity,
         ]);
-        return redirect()->route('zones.index')->with('success', 'Zone updated successfully.');
+        return redirect()->route('admin.zones.index')->with('success', 'Zone updated successfully.');
     }
 
     /**
@@ -118,17 +118,36 @@ class ZoneController extends Controller
      */
     public function slotstore(Request $request)
     {
-        //
         $request->validate([
             'zone_id' => 'required|exists:zones,id',
-            'number' => 'required'
+            'prefix' => 'required|string|max:5',
+            'start' => 'required|integer|min:1|max:999',
+            'count' => 'required|integer|min:1|max:100',
         ]);
 
-        Slot::create([
-            'zone_id' => $request->zone_id,
-            'number' => strtoupper($request->number),
-        ]);
+        $prefix = strtoupper($request->prefix);
+        $start = (int) $request->start;
+        $count = (int) $request->count;
+        $zoneId = $request->zone_id;
+        $created = 0;
+        $skipped = 0;
 
-        return back()->with('success', 'Slot added successfully.');
+        for ($i = 0; $i < $count; $i++) {
+            $number = $prefix . ($start + $i);
+            $exists = Slot::where('zone_id', $zoneId)->where('number', $number)->exists();
+            if (!$exists) {
+                Slot::create(['zone_id' => $zoneId, 'number' => $number]);
+                $created++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        $msg = $created . ' slot(s) created successfully.';
+        if ($skipped > 0) {
+            $msg .= ' ' . $skipped . ' skipped (already exist).';
+        }
+
+        return back()->with('success', $msg);
     }
 }

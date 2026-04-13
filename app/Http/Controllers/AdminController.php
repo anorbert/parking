@@ -9,45 +9,58 @@ use App\Models\Parking;
 use App\Models\User;
 use App\Models\PaymentHistory as Payment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+
 class AdminController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        // Total slots
-        $totalSlots = Slot::count();
+        $user = Auth::user();
+        $companyId = $user->company_id;
+
+        // Total slots (company's zones only)
+        $totalSlots = Slot::whereHas('zone', fn($q) => $q->where('company_id', $companyId))->count();
 
         // Occupied slots
-        $occupiedSlots = Slot::where('is_occupied', true)->count();
+        $occupiedSlots = Slot::where('is_occupied', true)
+            ->whereHas('zone', fn($q) => $q->where('company_id', $companyId))
+            ->count();
 
         // Total revenue Today
-        $totalRevenue = Parking::whereDay('created_at', now()->day)->sum('bill');
+        $totalRevenue = Parking::where('company_id', $companyId)
+            ->whereDay('created_at', now()->day)
+            ->sum('bill');
 
         // Total revenue MOMO
-        $momo = Parking::where('payment_method', 'momo')
-                        ->whereDay('created_at', now()->day)
-                        ->sum('bill');
+        $momo = Parking::where('company_id', $companyId)
+            ->where('payment_method', 'momo')
+            ->whereDay('created_at', now()->day)
+            ->sum('bill');
+
         // Total revenue Cash
-        $cash = Parking::where('payment_method', 'cash')
-                        ->whereDay('created_at', now()->day)
-                        ->sum('bill');
+        $cash = Parking::where('company_id', $companyId)
+            ->where('payment_method', 'cash')
+            ->whereDay('created_at', now()->day)
+            ->sum('bill');
 
         // Active tickets
-        $activeTickets = Parking::where('status', 'active')->count();
+        $activeTickets = Parking::where('company_id', $companyId)
+            ->where('status', 'active')
+            ->count();
 
         // Occupancy by zone
-        $zones = Zone::withCount([
-            'slots as occupied_count' => function ($query) {
-                $query->where('is_occupied', true);
-            }
-        ])->get();
+        $zones = Zone::where('company_id', $companyId)
+            ->withCount([
+                'slots as occupied_count' => function ($query) {
+                    $query->where('is_occupied', true);
+                }
+            ])->get();
         $zoneNames = $zones->pluck('name');
         $occupancyCounts = $zones->pluck('occupied_count');
 
         // Revenue trends (last 6 months)
-        $monthlyRevenue = Payment::selectRaw('MONTH(created_at) as month, SUM(amount) as total')
+        $monthlyRevenue = Payment::where('company_id', $companyId)
+            ->selectRaw('MONTH(created_at) as month, SUM(amount) as total')
             ->where('created_at', '>=', now()->subMonths(6))
             ->groupBy('month')
             ->orderBy('month')
@@ -56,13 +69,18 @@ class AdminController extends Controller
         $revenues = $monthlyRevenue->pluck('total');
 
         // Today's revenue
-        $todaysRevenue = Parking::whereDate('created_at', today())->sum('bill');
+        $todaysRevenue = Parking::where('company_id', $companyId)
+            ->whereDate('created_at', today())
+            ->sum('bill');
 
         // Today's transaction count
-        $todaysTransactions = Parking::whereDate('created_at', today())->count();
+        $todaysTransactions = Parking::where('company_id', $companyId)
+            ->whereDate('created_at', today())
+            ->count();
 
         // Most used zone this week
-        $mostUsedZone = Parking::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+        $mostUsedZone = Parking::where('company_id', $companyId)
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
             ->selectRaw('zone_id, COUNT(*) as count')
             ->groupBy('zone_id')
             ->with('zone')
@@ -70,16 +88,21 @@ class AdminController extends Controller
             ->first();
 
         // Average parking duration today
-        $avgDuration = Parking::whereDate('created_at', today())
+        $avgDuration = Parking::where('company_id', $companyId)
+            ->whereDate('created_at', today())
             ->whereNotNull('exit_time')
             ->get()
             ->map(function ($item) {
                 return Carbon::parse($item->created_at)->diffInMinutes(Carbon::parse($item->exit_time));
             })
             ->average();
+
         // Exempted vehicles count
-        $exemptedCount = Parking::where('status', 'exempt')->count();
-        return view('dashboard', compact(
+        $exemptedCount = Parking::where('company_id', $companyId)
+            ->where('status', 'exempt')
+            ->count();
+
+        return view('admin.dashboard', compact(
             'totalSlots',
             'occupiedSlots',
             'totalRevenue',
@@ -96,53 +119,5 @@ class AdminController extends Controller
             'momo',
             'cash'
         ));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

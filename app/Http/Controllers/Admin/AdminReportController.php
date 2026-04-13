@@ -16,7 +16,8 @@ class AdminReportController extends Controller
      */
     public function index(Request $request)
     {
-       $query = Parking::query();
+       $companyId = auth()->user()->company_id;
+       $query = Parking::where('company_id', $companyId);
 
         if ($request->filled('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);
@@ -62,7 +63,8 @@ class AdminReportController extends Controller
         $momoPayments = $filtered->where('payment_method', 'momo')->sum('bill');
 
         // Exempted vehicles count (only count if currently valid)
-        $exemptedCount = Vehicle::where(function ($q) {
+        $exemptedCount = Vehicle::where('company_id', $companyId)
+            ->where(function ($q) {
                 $q->whereNull('expired_at')->orWhere('expired_at', '>=', now());
             })->count();
 

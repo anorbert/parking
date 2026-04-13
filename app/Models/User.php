@@ -26,6 +26,7 @@ class User extends Authenticatable
         'role_id',
         'otp',
         'zone_id',
+        'company_id',
     ];
 
     /**
@@ -54,5 +55,25 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function zone()
+    {
+        return $this->belongsTo(Zone::class);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role_id === 1 && $this->company_id === null;
+    }
+
+    public function isCompanyAdmin(): bool
+    {
+        return $this->role_id === 2;
     }
 }

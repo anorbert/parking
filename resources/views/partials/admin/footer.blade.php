@@ -1,0 +1,1 @@
+{{-- ParkFlow Admin Footer (minimal) --}}

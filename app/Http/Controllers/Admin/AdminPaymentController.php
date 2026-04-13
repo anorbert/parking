@@ -12,8 +12,8 @@ class AdminPaymentController extends Controller
      */
     public function index(Request $request)
     {
-        //
-        $query = Parking::with('user');
+        $companyId = auth()->user()->company_id;
+        $query = Parking::with('user')->where('company_id', $companyId);
 
         if ($request->filled('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);

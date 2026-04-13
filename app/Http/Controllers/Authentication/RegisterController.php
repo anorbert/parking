@@ -4,58 +4,61 @@ namespace App\Http\Controllers\Authentication;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Show registration form.
      */
     public function index()
     {
-        //
-        return view('register');
-        
+        return view('Auth.register');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show registration form (alias).
      */
     public function create()
     {
-        //
+        return view('Auth.register');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Handle registration request.
      */
     public function store(Request $request)
     {
-        //
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone_number' => ['required', 'regex:/^07[2,3,8,9][0-9]{7}$/', 'unique:users,phone_number'],
+            'phone_number' => ['required', 'regex:/^07[2389][0-9]{7}$/', 'unique:users,phone_number'],
             'pin' => ['required', 'digits:4', 'confirmed'],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'phone_number' => $request->phone_number,
-            'password' => Hash::make($request->pin),
-            'role_id' => 1, // Default to regular user
-        ]);
+        try {
+            $user = DB::transaction(function () use ($request) {
+                return User::create([
+                    'name' => $request->name,
+                    'phone_number' => $request->phone_number,
+                    'password' => Hash::make($request->pin),
+                    'role_id' => 3,
+                ]);
+            });
 
-        event(new Registered($user));
+            event(new Registered($user));
+            Auth::login($user);
 
-        Auth::login($user);
+            return redirect()->route('user.dashboard')->with('success', 'Registration successful. Welcome!');
 
-        return redirect()->route('user.dashboard')->with('success', 'Registration successful. Welcome!');
+        } catch (\Exception $e) {
+            Log::error('Registration error: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Something went wrong. Please try again.');
+        }
     }
 
     /**

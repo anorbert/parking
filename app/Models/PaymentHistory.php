@@ -22,7 +22,8 @@ use HasFactory;
         'phone_number',
         'description',
         'status',
-        'amount'
+        'amount',
+        'company_id',
     ];
     protected $table = 'payment_histories';
 
@@ -32,5 +33,15 @@ use HasFactory;
     public function bank()
     {
         return $this->belongsTo(Bank::class);
+    }
+
+    public function parking()
+    {
+        return $this->belongsTo(Parking::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }

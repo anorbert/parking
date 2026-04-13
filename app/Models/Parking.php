@@ -19,8 +19,10 @@ class Parking extends Model
         'user_id',
         'status',
         'zone_id',
+        'slot_id',
         'phone_number',
         'payment_method',
+        'company_id',
     ];
     protected $casts = [
         'entry_time' => 'datetime',
@@ -35,5 +37,15 @@ class Parking extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function slot()
+    {
+        return $this->belongsTo(Slot::class);
     }
 }

@@ -4,81 +4,95 @@ namespace App\Http\Controllers\Authentication;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use App\Models\User;
-use Auth;
-use Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Show the login form.
      */
     public function index()
     {
-        //
+        return view('Auth.login');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the login form (named alias).
+     */
+    public function showLoginForm()
+    {
+        return view('Auth.login');
+    }
+
+    /**
+     * Show the change-pin form.
      */
     public function create()
     {
-        //
-        $user= Auth::user();
-        return view('change-pin', compact('user'));
+        $user = Auth::user();
+        return view('Auth.change-pin', compact('user'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Handle login request.
      */
     public function store(Request $request)
     {
-        // Validate input
         $request->validate([
-            'phone' => 'required',
+            'phone' => 'required|digits:10',
             'pin' => 'required|digits:4',
         ]);
 
-        // Attempt login
-        $credentials = [
-            'phone_number' => $request->phone,
-            'password' => $request->pin, // still called password in DB
-        ];
+        try {
+            $credentials = [
+                'phone_number' => $request->phone,
+                'password' => $request->pin,
+            ];
 
-        // Check if 'remember' checkbox is checked
-        $remember = $request->has('remember');
+            $remember = $request->boolean('remember');
 
-        if (Auth::attempt($credentials, $remember)) {
-            $user = Auth::user();
-            Log::info('User logged in successfully. User ID: ' . $user->id);
-            //check if pin is 1234 and redirect to change pin page
-            if ($credentials['password'] === '1234') {
-                Log::info('User attempted to login with default pin. Phone: ' . $request->phone);
-                return redirect()->route('user.change-pin.create')->with('warning', 'Please change your default PIN.');
+            if (Auth::attempt($credentials, $remember)) {
+                $request->session()->regenerate();
+
+                $user = Auth::user();
+                Log::info('User logged in successfully. User ID: ' . $user->id);
+
+                // Check if using default PIN and force change
+                if ($request->pin === '1234') {
+                    Log::info('User attempted to login with default pin. Phone: ' . $request->phone);
+                    return redirect()->route('user.change-pin.create')
+                        ->with('warning', 'Please change your default PIN.');
+                }
+
+                // Redirect based on role
+                switch ($user->role_id) {
+                    case 1:
+                        return redirect()->route('superadmin.dashboard')->with('success', 'Welcome Super Admin!');
+                    case 2:
+                        return redirect()->route('admin.dashboard')->with('success', 'Welcome Admin!');
+                    case 3:
+                        return redirect()->route('user.dashboard')->with('success', 'Welcome!');
+                    case 4:
+                        return redirect()->route('user.dashboard')->with('success', 'Welcome!');
+                    default:
+                        Auth::logout();
+                        $request->session()->invalidate();
+                        return redirect()->route('login')->with('error', 'Unauthorized role.');
+                }
             }
-            // Redirect based on role
-            switch ($user->role_id) {
-                case 1:
-                    return redirect()->route('admin.dashboard')->with('success', 'Welcome Admin!');
-                case 2:
-                    return redirect()->route('editor.dashboard')->with('success', 'Welcome Editor!');
-                case 3:
-                    return redirect()->route('user.dashboard')->with('success', 'Welcome!');
-                default:
-                    Auth::logout();
-                    return redirect()->back()->with('error', 'Unauthorized role.');
-            }
+
+            Log::warning('Failed login attempt for phone: ' . $request->phone);
+            return back()->withInput()->with('error', 'Invalid credentials.');
+
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Something went wrong. Please try again.');
         }
-
-        Log::warning('Failed login attempt for phone: ' . $request->phone);
-        return redirect()->back()->with('error', 'Invalid credentials.');
     }
-
-
 
     /**
      * Display the specified resource.
@@ -97,31 +111,40 @@ class LoginController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update PIN (change-pin).
      */
     public function update(Request $request, string $id)
     {
-        //
-         $request->validate([
+        $request->validate([
             'current_password' => 'required',
-            'new_password' => 'required|string|min:4|max:4|confirmed',
+            'new_password' => 'required|digits:4|confirmed',
         ]);
 
-        $user = User::findOrFail($id);
-        // Check if the current password matches
-        if (!Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => 'Current password does not match']);
+        try {
+            $user = User::findOrFail($id);
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current PIN does not match.']);
+            }
+
+            DB::transaction(function () use ($user, $request) {
+                $user->update([
+                    'password' => Hash::make($request->new_password),
+                ]);
+            });
+
+            Log::info('User PIN changed successfully. User ID: ' . $user->id);
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('success', 'PIN changed successfully. Please log in again.');
+
+        } catch (\Exception $e) {
+            Log::error('PIN change error: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong. Please try again.');
         }
-        $user->update([
-            'password' => Hash::make($request->new_password),
-        ]);
-        Log::info('User PIN changed successfully. User ID: ' . $user->id);
-         // Redirect to the change PIN page with a success message
-         session()->flash('success', 'PIN changed successfully. Please log in again.');
-        // returning to login page with success message
-        Auth::logout(); // Log out the user after changing PIN
-        return redirect()->route('/')->with('success', 'PIN changed successfully. Please log in again.');
-
     }
 
     /**

@@ -14,14 +14,18 @@ class StaffController extends Controller
 {
     public function index()
     {
-        $staff = User::with('role')->paginate(10);
+        $companyId = auth()->user()->company_id;
+        $staff = User::with('role')
+            ->where('company_id', $companyId)
+            ->paginate(10);
         return view('admin.staffs.index', compact('staff'));
     }
 
     public function create()
     {
-        $zones = Zone::all();
-        $roles = Role::all();
+        $companyId = auth()->user()->company_id;
+        $zones = Zone::where('company_id', $companyId)->get();
+        $roles = Role::whereIn('id', [2, 3, 4])->get(); // Exclude Super Admin
         return view('admin.staffs.create', compact('zones', 'roles'));
     }
 
@@ -50,11 +54,12 @@ class StaffController extends Controller
             'role_id'      => $request->role_id,
             'zone_id'      => $request->zone_id ?? null,
             'password'     => Hash::make($defaultPin),
+            'company_id'   => auth()->user()->company_id,
         ]);
 
         if ($user) {
             // Optional: Notify user or log PIN somewhere securely
-            return redirect()->route('staff.index')->with('success', 'Staff created successfully. Default PIN: ' . $defaultPin);
+            return redirect()->route('admin.staff.index')->with('success', 'Staff created successfully. Default PIN: ' . $defaultPin);
         }
 
         return redirect()->back()->with('error', 'Failed to create staff.');
@@ -68,9 +73,10 @@ class StaffController extends Controller
 
     public function edit(string $id)
     {
-        $user = User::findOrFail($id);
-        $zones = Zone::all();
-        $roles = Role::all();
+        $companyId = auth()->user()->company_id;
+        $user = User::where('company_id', $companyId)->findOrFail($id);
+        $zones = Zone::where('company_id', $companyId)->get();
+        $roles = Role::whereIn('id', [2, 3, 4])->get();
         return view('admin.staffs.edit', compact('user', 'zones', 'roles'));
     }
 
@@ -103,7 +109,7 @@ class StaffController extends Controller
 
         $user->save();
 
-        return redirect()->route('staff.index')->with('success', 'Staff updated successfully.');
+        return redirect()->route('admin.staff.index')->with('success', 'Staff updated successfully.');
     }
 
     public function destroy(string $id)
@@ -111,7 +117,7 @@ class StaffController extends Controller
         $user = User::findOrFail($id);
 
         if ($user->delete()) {
-            return redirect()->route('staff.index')->with('success', 'Staff deleted successfully.');
+            return redirect()->route('admin.staff.index')->with('success', 'Staff deleted successfully.');
         }
 
         return redirect()->back()->with('error', 'Failed to delete staff.');
