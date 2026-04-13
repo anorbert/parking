@@ -16,6 +16,13 @@ class AdminController extends Controller
     public function index()
     {
         $user = Auth::user();
+
+        // If user is company admin and not assigned to a company, redirect to their own company creation page
+        if ($user->isCompanyAdmin() && !$user->company_id) {
+            return redirect()->route('admin.companies.create')
+                ->with('error', 'You must register your company before accessing the dashboard.');
+        }
+
         $companyId = $user->company_id;
 
         // Total slots (company's zones only)

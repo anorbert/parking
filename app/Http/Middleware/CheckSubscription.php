@@ -25,6 +25,18 @@ class CheckSubscription
             return $next($request);
         }
 
+
+        // Allow company admins (role_id == 2) to access dashboard and company creation routes even if not assigned to a company
+        $route = $request->route();
+        $isAdminDashboard = $route && $route->getName() === 'admin.dashboard';
+        $isCompanyCreate = $route && (
+            $route->getName() === 'superadmin.companies.create' ||
+            $route->getName() === 'superadmin.companies.store'
+        );
+        if (!$user->company_id && $user->role_id == 2 && ($isAdminDashboard || $isCompanyCreate)) {
+            return $next($request);
+        }
+
         if (!$user->company_id) {
             abort(403, 'No company assigned.');
         }

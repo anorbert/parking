@@ -46,7 +46,7 @@ class RegisterController extends Controller
                     'name' => $request->name,
                     'phone_number' => $request->phone_number,
                     'password' => Hash::make($request->pin),
-                    'role_id' => 3,
+                    'role_id' => 2, // Default to Company Admin
                 ]);
             });
 

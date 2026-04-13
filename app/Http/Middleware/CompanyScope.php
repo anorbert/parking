@@ -25,9 +25,23 @@ class CompanyScope
             return $next($request);
         }
 
-        // Non-super users must belong to a company
-        if (!$user->company_id) {
+
+
+        // Allow company admins (role_id == 2) to access dashboard and company creation routes even if not assigned to a company
+        $route = $request->route();
+        $isAdminDashboard = $route && $route->getName() === 'admin.dashboard';
+        $isCompanyCreate = $route && (
+            $route->getName() === 'superadmin.companies.create' ||
+            $route->getName() === 'superadmin.companies.store'
+        );
+
+        if (!$user->company_id && !$user->isCompanyAdmin()) {
             abort(403, 'You are not assigned to any company.');
+        }
+
+        // If company admin and not assigned to a company, allow dashboard and company creation
+        if ($user->isCompanyAdmin() && !$user->company_id && ($isAdminDashboard || $isCompanyCreate)) {
+            return $next($request);
         }
 
         return $next($request);
