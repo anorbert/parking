@@ -8,8 +8,7 @@
 <style>
   .lp-body {
     background: #111315 !important;
-    overflow: hidden !important;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0; padding: 0;
   }
 
@@ -31,7 +30,7 @@
 
   .lp-page {
     position: relative; z-index: 1;
-    height: 100vh;
+    min-height: 100vh;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     padding: 24px;

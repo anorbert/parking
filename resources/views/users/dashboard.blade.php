@@ -58,7 +58,9 @@
 .uf-page-sub   { font-size: 12px; font-weight: 500; color: var(--uf-muted); margin-top: 2px; }
 
 /* FORM GRID */
-.uf-form-grid { display: grid; grid-template-columns: 1fr 180px; gap: 14px; align-items: end; }
+.uf-form-grid { display: flex; gap: 14px; align-items: flex-end; }
+.uf-form-grid .uf-field { flex: 1; min-width: 0; }
+.uf-form-grid .uf-btn { flex-shrink: 0; height: 48px; }
 .uf-field { display: flex; flex-direction: column; gap: 7px; }
 .uf-field label {
   font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
@@ -281,7 +283,7 @@
 
 @media (max-width: 992px) {
   .uf-tiles { grid-template-columns: repeat(2, 1fr); }
-  .uf-form-grid { grid-template-columns: 1fr; }
+  .uf-form-grid { flex-direction: column; }
 }
 @media (max-width: 576px) {
   .uf-tiles { grid-template-columns: 1fr; }
