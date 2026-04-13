@@ -21,10 +21,11 @@
     <div class="pf-tb-time" id="pf-clock">--:--:--</div>
     <div class="pf-tb-divider"></div>
 
-    <button class="pf-tb-icon-btn" title="Notifications" id="pf-notif-toggle">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <div class="pf-tb-notif-dot" id="pf-notif-dot" style="display:none;"></div>
-
+    <div style="position:relative;">
+      <button class="pf-tb-icon-btn" title="Notifications" id="pf-notif-toggle">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="pf-tb-notif-dot" id="pf-notif-dot" style="display:none;"></div>
+      </button>
       <div class="pf-notif-dropdown" id="pf-notif-dropdown">
         <div class="pf-notif-header">
           <span style="font-size:13px;font-weight:800;color:var(--pf-text);">Notifications</span>
@@ -34,7 +35,7 @@
           <div style="padding:24px;text-align:center;color:var(--pf-muted);font-size:12px;">Loading...</div>
         </div>
       </div>
-    </button>
+    </div>
 
     <div class="pf-tb-divider"></div>
 
