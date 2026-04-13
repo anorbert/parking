@@ -9,6 +9,7 @@ use App\Models\Zone;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Notifications\NewStaffNotification;
 
 class StaffController extends Controller
 {
@@ -58,7 +59,10 @@ class StaffController extends Controller
         ]);
 
         if ($user) {
-            // Optional: Notify user or log PIN somewhere securely
+            // Notify company admin
+            $roleName = Role::find($request->role_id)->name ?? 'Staff';
+            auth()->user()->notify(new NewStaffNotification($user->name, $roleName));
+
             return redirect()->route('admin.staff.index')->with('success', 'Staff created successfully. Default PIN: ' . $defaultPin);
         }
 

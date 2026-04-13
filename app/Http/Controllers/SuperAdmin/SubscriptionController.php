@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\Company;
 use App\Services\CompanyService;
 use Illuminate\Http\Request;
@@ -20,8 +21,9 @@ class SubscriptionController extends Controller
 
     public function index()
     {
-        $subscriptions = Subscription::with(['company', 'creator'])->latest()->get();
-        return view('superadmin.subscriptions.index', compact('subscriptions'));
+        $subscriptions = Subscription::with(['company', 'creator', 'plan'])->latest()->get();
+        $plans = SubscriptionPlan::active()->orderBy('sort_order')->get();
+        return view('superadmin.subscriptions.index', compact('subscriptions', 'plans'));
     }
 
     public function activate(string $id)
@@ -37,8 +39,16 @@ class SubscriptionController extends Controller
 
     public function renew(Request $request, string $companyId)
     {
+        $request->validate([
+            'plan_id' => 'required|exists:subscription_plans,id',
+        ]);
+
         try {
-            $this->companyService->renewSubscription($companyId, $request->user()->id);
+            $this->companyService->renewSubscription(
+                $companyId,
+                $request->plan_id,
+                $request->user()->id
+            );
             return back()->with('success', 'Subscription renewed successfully.');
         } catch (\Exception $e) {
             Log::error('Subscription renewal failed: ' . $e->getMessage());

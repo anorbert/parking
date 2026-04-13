@@ -395,7 +395,7 @@
           <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }} />
           <span>Remember me</span>
         </label>
-        <a class="lp-forgot" href="#">Forgot PIN?</a>
+        <a class="lp-forgot" href="{{ route('password.request') }}">Forgot PIN?</a>
       </div>
 
       <button type="submit" class="lp-btn">Log In to System</button>

@@ -7,6 +7,7 @@ use Illuminate\Database\Seeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\BankSeeder;
 use Database\Seeders\SuperAdminSeeder;
+use Database\Seeders\SubscriptionPlanSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,6 +21,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             BankSeeder::class,
             SuperAdminSeeder::class,
+            SubscriptionPlanSeeder::class,
         ]);
     }
 }

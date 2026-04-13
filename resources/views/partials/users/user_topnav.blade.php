@@ -21,9 +21,19 @@
     <div class="uf-tb-time" id="uf-clock">--:--:--</div>
     <div class="uf-tb-divider"></div>
 
-    <button class="uf-tb-icon-btn" title="Notifications">
+    <button class="uf-tb-icon-btn" title="Notifications" id="uf-notif-toggle">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <div class="uf-tb-notif-dot"></div>
+      <div class="uf-tb-notif-dot" id="uf-notif-dot" style="display:none;"></div>
+
+      <div class="uf-notif-dropdown" id="uf-notif-dropdown">
+        <div class="uf-notif-header">
+          <span style="font-size:13px;font-weight:800;color:var(--uf-dark);">Notifications</span>
+          <button id="uf-notif-read-all" style="background:none;border:none;font-size:11px;font-weight:700;color:var(--uf-blue,#3A9ED4);cursor:pointer;">Mark all read</button>
+        </div>
+        <div class="uf-notif-list" id="uf-notif-list">
+          <div style="padding:24px;text-align:center;color:var(--uf-muted);font-size:12px;">Loading...</div>
+        </div>
+      </div>
     </button>
 
     <div class="uf-tb-divider"></div>
@@ -37,6 +47,8 @@
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" style="margin-left:2px;"><polyline points="6 9 12 15 18 9"/></svg>
 
       <div class="uf-tb-dropdown" id="uf-user-dropdown">
+        <a href="{{ route('account.profile') }}"><i class="fa fa-user" style="width:14px;"></i> My Profile</a>
+        <a href="{{ route('account.settings') }}"><i class="fa fa-cog" style="width:14px;"></i> Settings</a>
         <a href="{{ route('logout') }}" class="uf-danger"
            onclick="event.preventDefault(); document.getElementById('uf-logout-topbar').submit();">
           <i class="fa fa-sign-out" style="width:14px;"></i> Log Out

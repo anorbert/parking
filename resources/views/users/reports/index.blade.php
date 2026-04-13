@@ -60,7 +60,10 @@
 .uf-search-inline:focus-within{border-color:var(--uf-blue)}
 .uf-search-inline input{background:none;border:none;outline:none;font-family:var(--uf-font);font-size:13px;font-weight:600;color:var(--uf-dark);width:100%}
 .uf-search-inline input::placeholder{color:#C4C9D0;font-weight:400}
-@media(max-width:992px){.uf-tiles{grid-template-columns:repeat(2,1fr)}.uf-filter-bar{flex-direction:column;align-items:stretch}}
+.uf-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.uf-chart-wrap{padding:16px 20px}
+.uf-chart-wrap canvas{max-height:240px}
+@media(max-width:992px){.uf-tiles{grid-template-columns:repeat(2,1fr)}.uf-filter-bar{flex-direction:column;align-items:stretch}.uf-grid2{grid-template-columns:1fr}}
 @media(max-width:576px){.uf-tiles{grid-template-columns:1fr}}
 </style>
 @endpush
@@ -134,6 +137,24 @@
     <div class="uf-tile-label">Unique Vehicles</div>
     <div class="uf-tile-value">{{ $uniquePlates }}</div>
     <div class="uf-tile-delta"><span class="uf-delta-muted">Distinct plates</span></div>
+  </div>
+</div>
+
+{{-- CHARTS --}}
+<div class="uf-grid2">
+  <div class="uf-card">
+    <div class="uf-card-head">
+      <div class="uf-card-title">Daily Revenue (14 days)</div>
+    </div>
+    <div class="uf-chart-wrap"><canvas id="dailyChart"></canvas></div>
+  </div>
+  <div class="uf-card">
+    <div class="uf-card-head">
+      <div class="uf-card-title">Payment Split</div>
+    </div>
+    <div class="uf-chart-wrap" style="display:flex;align-items:center;justify-content:center;">
+      <canvas id="paymentChart" style="max-width:220px;max-height:220px;"></canvas>
+    </div>
   </div>
 </div>
 
@@ -220,6 +241,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 function filterReport() {
   var term = document.getElementById('reportSearch').value.toUpperCase();
@@ -229,5 +251,61 @@ function filterReport() {
     row.style.display = plate.indexOf(term) > -1 ? '' : 'none';
   });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Daily Revenue Chart
+    const trendLabels = {!! json_encode($dailyTrend->pluck('day')) !!};
+    const trendData = {!! json_encode($dailyTrend->pluck('revenue')) !!};
+
+    new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+            labels: trendLabels.map(d => {
+                const dt = new Date(d);
+                return dt.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];
+            }),
+            datasets: [{
+                label: 'Revenue (RWF)',
+                data: trendData,
+                borderColor: '#F5A800',
+                backgroundColor: 'rgba(245,168,0,0.08)',
+                fill: true,
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#F5A800'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { font: { size: 10, weight: 600 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                x: { ticks: { font: { size: 9, weight: 600 }, maxRotation: 45 }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Payment Split Doughnut
+    new Chart(document.getElementById('paymentChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Cash', 'MoMo'],
+            datasets: [{
+                data: [{{ $cashTotal }}, {{ $momoTotal }}],
+                backgroundColor: ['#22C55E', '#F5A800'],
+                borderWidth: 0,
+                spacing: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 11, weight: 700 }, padding: 16 } }
+            }
+        }
+    });
+});
 </script>
 @endpush

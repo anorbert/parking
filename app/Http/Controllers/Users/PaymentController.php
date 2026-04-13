@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Parking;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PaymentHistory;
+use App\Models\User;
+use App\Notifications\PaymentReceivedNotification;
 use Illuminate\Support\Facades\Log; // Uncomment this line if you want to use logging
 
 class PaymentController extends Controller
@@ -145,6 +147,12 @@ class PaymentController extends Controller
                 if ($parking) {
                     $parking->status = 'inactive';
                     $parking->save();
+
+                    // Notify company admin of MoMo payment
+                    $admins = User::where('company_id', $parking->company_id)->where('role_id', 2)->get();
+                    foreach ($admins as $admin) {
+                        $admin->notify(new PaymentReceivedNotification($parking->plate_number, (int) $transaction->amount, 'momo'));
+                    }
                 }else {
                     Log::error('Parking not found for transaction:', $trxRef);
                     // return response()->json(['message' => 'Parking not found.'], 404);

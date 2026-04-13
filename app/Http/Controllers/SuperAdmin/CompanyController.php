@@ -9,6 +9,7 @@ use App\Models\Subscription;
 use App\Models\Invoice;
 use App\Models\Parking;
 use App\Models\User;
+use App\Models\SubscriptionPlan;
 use App\Services\CompanyService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -36,7 +37,8 @@ class CompanyController extends Controller
 
     public function create()
     {
-        return view('superadmin.companies.create');
+        $plans = SubscriptionPlan::active()->orderBy('sort_order')->get();
+        return view('superadmin.companies.create', compact('plans'));
     }
 
     public function store(CompanyStoreRequest $request)
@@ -48,7 +50,8 @@ class CompanyController extends Controller
                     'name'         => $request->admin_name,
                     'email'        => $request->admin_email,
                     'phone_number' => $request->admin_phone,
-                ]
+                ],
+                $request->plan_id
             );
 
             return redirect()->route('superadmin.companies.index')

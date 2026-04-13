@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 class AdminReportController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
        $companyId = auth()->user()->company_id;
@@ -31,22 +28,24 @@ class AdminReportController extends Controller
             $query->where('payment_method', $request->payment_method);
         }
 
-        $filtered = $query->with(['zone', 'user'])->get();
+        $filtered = $query->with(['zone', 'user'])->latest()->get();
 
         // Total revenue
         $totalRevenue = $filtered->sum('bill');
 
         // Most used zone
-        $mostUsedZone = $filtered->groupBy('zone_id')
+        $mostUsedZoneData = $filtered->groupBy('zone_id')
             ->map(fn($group) => ['count' => $group->count(), 'name' => optional($group->first()->zone)->name])
             ->sortByDesc('count')
             ->first();
+        $mostUsedZone = $mostUsedZoneData['name'] ?? 'N/A';
 
         // Top client
-        $topClient = $filtered->groupBy('user_id')
-            ->map(fn($group) => ['count' => $group->count(), 'name' => optional($group->first()->user)->name])
+        $topClientData = $filtered->groupBy('plate_number')
+            ->map(fn($group) => ['count' => $group->count(), 'plate' => $group->first()->plate_number])
             ->sortByDesc('count')
             ->first();
+        $topClient = $topClientData['plate'] ?? 'N/A';
 
         // Average duration (in minutes)
         $durations = $filtered->map(function ($parking) {
@@ -68,6 +67,14 @@ class AdminReportController extends Controller
                 $q->whereNull('expired_at')->orWhere('expired_at', '>=', now());
             })->count();
 
+        // Daily revenue trend (last 14 days)
+        $dailyTrend = Parking::where('company_id', $companyId)
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->selectRaw("DATE(created_at) as day, SUM(bill) as revenue, COUNT(*) as parkings")
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
         return view('admin.reports.index', compact(
             'totalRevenue',
             'mostUsedZone',
@@ -75,49 +82,17 @@ class AdminReportController extends Controller
             'avgDuration',
             'cashPayments',
             'momoPayments',
-            'exemptedCount'
+            'exemptedCount',
+            'filtered',
+            'dailyTrend'
         ));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+    public function create() {}
+    public function store(Request $request) {}
+    public function show(string $id) {}
+    public function edit(string $id) {}
+    public function update(Request $request, string $id) {}
 
     /**
      * Remove the specified resource from storage.

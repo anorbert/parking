@@ -213,6 +213,41 @@ html, body { height: 100%; font-family: var(--uf-font); background: var(--uf-con
 .uf-tb-dropdown a.uf-danger { color: var(--uf-red); }
 .uf-tb-dropdown a.uf-danger:hover { background: rgba(239,68,68,0.08); }
 
+/* Notification dropdown */
+.uf-notif-dropdown {
+  display: none; position: absolute; top: 100%; right: 0;
+  margin-top: 6px; background: #FFF; border: 1px solid var(--uf-border);
+  border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+  width: 320px; z-index: 300; overflow: hidden;
+}
+.uf-notif-dropdown.open { display: block; }
+.uf-notif-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--uf-border);
+}
+.uf-notif-list { max-height: 340px; overflow-y: auto; }
+.uf-notif-item {
+  display: flex; gap: 10px; padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.04); cursor: pointer;
+  transition: background 0.1s;
+}
+.uf-notif-item:hover { background: #F8F9FB; }
+.uf-notif-item.unread { background: rgba(58,158,212,0.04); }
+.uf-notif-item:last-child { border-bottom: none; }
+.uf-notif-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.uf-notif-icon-blue { background: rgba(58,158,212,0.12); color: #3A9ED4; }
+.uf-notif-icon-green { background: rgba(74,222,128,0.12); color: #22C55E; }
+.uf-notif-icon-yellow { background: rgba(245,168,0,0.12); color: #D97706; }
+.uf-notif-icon-purple { background: rgba(167,139,250,0.12); color: #A78BFA; }
+.uf-notif-icon-red { background: rgba(248,113,113,0.12); color: #F87171; }
+.uf-notif-title { font-size: 12px; font-weight: 700; color: var(--uf-dark); }
+.uf-notif-body { font-size: 11px; font-weight: 500; color: var(--uf-muted); margin-top: 2px; }
+.uf-notif-time { font-size: 10px; font-weight: 600; color: #C4C9D0; margin-top: 3px; }
+.uf-notif-empty { padding: 32px 16px; text-align: center; font-size: 12px; color: var(--uf-muted); }
+
 /* ── CONTENT ── */
 .uf-content { flex: 1; overflow-y: auto; padding: 22px 24px; background: var(--uf-content); }
 .uf-content::-webkit-scrollbar { width: 4px; }
@@ -268,11 +303,74 @@ html, body { height: 100%; font-family: var(--uf-font); background: var(--uf-con
     userToggle.addEventListener('click', function(e) {
       e.stopPropagation();
       userDropdown.classList.toggle('open');
+      notifDropdown && notifDropdown.classList.remove('open');
     });
     document.addEventListener('click', function() {
       userDropdown.classList.remove('open');
     });
   }
+
+  // Notification dropdown
+  var notifToggle = document.getElementById('uf-notif-toggle');
+  var notifDropdown = document.getElementById('uf-notif-dropdown');
+  var notifDot = document.getElementById('uf-notif-dot');
+  var notifList = document.getElementById('uf-notif-list');
+  var notifReadAll = document.getElementById('uf-notif-read-all');
+
+  function loadNotifications() {
+    fetch('{{ route("notifications.index") }}', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (notifDot) notifDot.style.display = data.unread_count > 0 ? 'block' : 'none';
+        if (!notifList) return;
+        if (!data.notifications.length) {
+          notifList.innerHTML = '<div class="uf-notif-empty"><i class="fa fa-bell-slash" style="font-size:18px;display:block;margin-bottom:6px;"></i>No notifications yet</div>';
+          return;
+        }
+        notifList.innerHTML = data.notifications.map(function(n) {
+          return '<div class="uf-notif-item' + (n.read ? '' : ' unread') + '" data-id="' + n.id + '">'
+            + '<div class="uf-notif-icon uf-notif-icon-' + n.color + '"><i class="fa ' + n.icon + '"></i></div>'
+            + '<div><div class="uf-notif-title">' + n.title + '</div>'
+            + '<div class="uf-notif-body">' + n.body + '</div>'
+            + '<div class="uf-notif-time">' + n.time + '</div></div></div>';
+        }).join('');
+
+        notifList.querySelectorAll('.uf-notif-item.unread').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            fetch('{{ url("notifications") }}/' + id + '/read', {
+              method: 'POST',
+              headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+            }).then(function() { el.classList.remove('unread'); loadNotifications(); });
+          });
+        });
+      });
+  }
+
+  if (notifToggle && notifDropdown) {
+    notifToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      notifDropdown.classList.toggle('open');
+      userDropdown && userDropdown.classList.remove('open');
+      if (notifDropdown.classList.contains('open')) loadNotifications();
+    });
+    document.addEventListener('click', function(e) {
+      if (!notifToggle.contains(e.target)) notifDropdown.classList.remove('open');
+    });
+  }
+
+  if (notifReadAll) {
+    notifReadAll.addEventListener('click', function(e) {
+      e.stopPropagation();
+      fetch('{{ route("notifications.readAll") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+      }).then(function() { loadNotifications(); });
+    });
+  }
+
+  loadNotifications();
+  setInterval(loadNotifications, 60000);
 })();
 </script>
 

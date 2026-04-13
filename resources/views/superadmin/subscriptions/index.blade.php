@@ -25,6 +25,7 @@
 .pf-pill-green { background: rgba(74,222,128,0.12); color: var(--pf-green); }
 .pf-pill-red { background: rgba(248,113,113,0.12); color: var(--pf-red); }
 .pf-pill-yellow { background: rgba(245,168,0,0.12); color: var(--pf-yellow); }
+.pf-pill-blue { background: rgba(58,158,212,0.10); color: var(--pf-blue, #3A9ED4); }
 
 .pf-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-family: var(--pf-font); font-size: 11px; font-weight: 700; transition: all 0.15s; text-decoration: none; }
 .pf-btn-green { background: rgba(74,222,128,0.12); color: var(--pf-green); }
@@ -32,9 +33,13 @@
 .pf-btn-primary { background: var(--pf-yellow); color: #0D0F11; }
 .pf-btn-primary:hover { background: #e09800; color: #0D0F11; text-decoration: none; }
 
+.pf-select { padding: 5px 8px; border-radius: 6px; border: 1px solid #D0D5DD; background: #FAFBFC; font-family: var(--pf-font); font-size: 11px; font-weight: 600; color: var(--pf-text); }
+
 .pf-alert { padding: 10px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-bottom: 14px; }
 .pf-alert-success { background: rgba(74,222,128,0.12); color: var(--pf-green); border: 1px solid rgba(74,222,128,0.25); }
 .pf-alert-error { background: rgba(248,113,113,0.12); color: var(--pf-red); border: 1px solid rgba(248,113,113,0.25); }
+
+.pf-renew-form { display: flex; align-items: center; gap: 6px; }
 </style>
 @endpush
 
@@ -61,12 +66,12 @@
           <tr>
             <th>#</th>
             <th>Company</th>
+            <th>Plan</th>
             <th>Amount</th>
-            <th>Start Date</th>
-            <th>End Date</th>
+            <th>Period</th>
             <th>Status</th>
+            <th>Payment</th>
             <th>Created By</th>
-            <th>Paid At</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -75,9 +80,18 @@
           <tr>
             <td>{{ $i + 1 }}</td>
             <td>{{ $sub->company->name ?? '—' }}</td>
-            <td>{{ number_format($sub->amount) }} RWF</td>
-            <td>{{ $sub->start_date ? \Carbon\Carbon::parse($sub->start_date)->format('d M Y') : '—' }}</td>
-            <td>{{ $sub->end_date ? \Carbon\Carbon::parse($sub->end_date)->format('d M Y') : '—' }}</td>
+            <td>
+              @if($sub->plan)
+                <span class="pf-pill pf-pill-blue">{{ $sub->plan->name }}</span>
+              @else
+                <span style="color:var(--pf-muted);font-size:11px;">Legacy</span>
+              @endif
+            </td>
+            <td style="font-weight:700;">{{ number_format($sub->amount) }} RWF</td>
+            <td>
+              <div style="font-size:11px;">{{ $sub->start_date ? \Carbon\Carbon::parse($sub->start_date)->format('d M Y') : '—' }}</div>
+              <div style="font-size:10px;color:var(--pf-muted);">to {{ $sub->end_date ? \Carbon\Carbon::parse($sub->end_date)->format('d M Y') : '—' }}</div>
+            </td>
             <td>
               @if($sub->status === 'Active' && $sub->end_date >= now())
                 <span class="pf-pill pf-pill-green">Active</span>
@@ -87,8 +101,13 @@
                 <span class="pf-pill pf-pill-red">Expired</span>
               @endif
             </td>
+            <td>
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">{{ $sub->payment_method ?? 'cash' }}</span>
+              @if($sub->paid_at)
+                <div style="font-size:9px;color:var(--pf-muted);">{{ \Carbon\Carbon::parse($sub->paid_at)->format('d M Y') }}</div>
+              @endif
+            </td>
             <td>{{ $sub->creator->name ?? '—' }}</td>
-            <td>{{ $sub->paid_at ? \Carbon\Carbon::parse($sub->paid_at)->format('d M Y') : '—' }}</td>
             <td>
               @if($sub->status === 'Pending')
                 <form action="{{ route('superadmin.subscriptions.activate', $sub->id) }}" method="POST" style="display:inline;">
@@ -97,8 +116,13 @@
                 </form>
               @endif
               @if($sub->status === 'Expired' || ($sub->end_date && $sub->end_date < now()))
-                <form action="{{ route('superadmin.subscriptions.renew', $sub->company_id) }}" method="POST" style="display:inline;">
+                <form action="{{ route('superadmin.subscriptions.renew', $sub->company_id) }}" method="POST" class="pf-renew-form">
                   @csrf
+                  <select name="plan_id" class="pf-select" required>
+                    @foreach($plans as $plan)
+                      <option value="{{ $plan->id }}">{{ $plan->name }} ({{ number_format($plan->price) }})</option>
+                    @endforeach
+                  </select>
                   <button type="submit" class="pf-btn pf-btn-primary">Renew</button>
                 </form>
               @endif

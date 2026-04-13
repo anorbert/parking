@@ -287,6 +287,41 @@ body, html {
 .pf-tb-dropdown a.pf-danger { color: var(--pf-red); }
 .pf-tb-dropdown a.pf-danger:hover { background: rgba(248,113,113,0.08); }
 
+/* Notification dropdown */
+.pf-notif-dropdown {
+  display: none; position: absolute; top: 100%; right: 0;
+  margin-top: 6px; background: #FFFFFF; border: 1px solid #E2E6EA;
+  border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+  width: 320px; z-index: 300; overflow: hidden;
+}
+.pf-notif-dropdown.open { display: block; }
+.pf-notif-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid #E2E6EA;
+}
+.pf-notif-list { max-height: 340px; overflow-y: auto; }
+.pf-notif-item {
+  display: flex; gap: 10px; padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.04); cursor: pointer;
+  transition: background 0.1s;
+}
+.pf-notif-item:hover { background: #F8F9FB; }
+.pf-notif-item.unread { background: rgba(58,158,212,0.04); }
+.pf-notif-item:last-child { border-bottom: none; }
+.pf-notif-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.pf-notif-icon-blue { background: rgba(58,158,212,0.12); color: #3A9ED4; }
+.pf-notif-icon-green { background: rgba(74,222,128,0.12); color: #22C55E; }
+.pf-notif-icon-yellow { background: rgba(245,168,0,0.12); color: #D97706; }
+.pf-notif-icon-purple { background: rgba(167,139,250,0.12); color: #A78BFA; }
+.pf-notif-icon-red { background: rgba(248,113,113,0.12); color: #F87171; }
+.pf-notif-title { font-size: 12px; font-weight: 700; color: var(--pf-text); }
+.pf-notif-body { font-size: 11px; font-weight: 500; color: var(--pf-muted); margin-top: 2px; }
+.pf-notif-time { font-size: 10px; font-weight: 600; color: #C4C9D0; margin-top: 3px; }
+.pf-notif-empty { padding: 32px 16px; text-align: center; font-size: 12px; color: var(--pf-muted); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .pf-sidebar { position: fixed; left: 0; top: 0; bottom: 0; margin-left: -240px; z-index: 200; }
@@ -373,11 +408,75 @@ body, html {
     userToggle.addEventListener('click', function(e) {
       e.stopPropagation();
       userDropdown.classList.toggle('open');
+      notifDropdown && notifDropdown.classList.remove('open');
     });
     document.addEventListener('click', function() {
       userDropdown.classList.remove('open');
     });
   }
+
+  // Notification dropdown
+  var notifToggle = document.getElementById('pf-notif-toggle');
+  var notifDropdown = document.getElementById('pf-notif-dropdown');
+  var notifDot = document.getElementById('pf-notif-dot');
+  var notifList = document.getElementById('pf-notif-list');
+  var notifReadAll = document.getElementById('pf-notif-read-all');
+
+  function loadNotifications() {
+    fetch('{{ route("notifications.index") }}', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (notifDot) notifDot.style.display = data.unread_count > 0 ? 'block' : 'none';
+        if (!notifList) return;
+        if (!data.notifications.length) {
+          notifList.innerHTML = '<div class="pf-notif-empty"><i class="fa fa-bell-slash" style="font-size:18px;display:block;margin-bottom:6px;"></i>No notifications yet</div>';
+          return;
+        }
+        notifList.innerHTML = data.notifications.map(function(n) {
+          return '<div class="pf-notif-item' + (n.read ? '' : ' unread') + '" data-id="' + n.id + '">'
+            + '<div class="pf-notif-icon pf-notif-icon-' + n.color + '"><i class="fa ' + n.icon + '"></i></div>'
+            + '<div><div class="pf-notif-title">' + n.title + '</div>'
+            + '<div class="pf-notif-body">' + n.body + '</div>'
+            + '<div class="pf-notif-time">' + n.time + '</div></div></div>';
+        }).join('');
+
+        notifList.querySelectorAll('.pf-notif-item.unread').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            fetch('{{ url("notifications") }}/' + id + '/read', {
+              method: 'POST',
+              headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+            }).then(function() { el.classList.remove('unread'); loadNotifications(); });
+          });
+        });
+      });
+  }
+
+  if (notifToggle && notifDropdown) {
+    notifToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      notifDropdown.classList.toggle('open');
+      userDropdown && userDropdown.classList.remove('open');
+      if (notifDropdown.classList.contains('open')) loadNotifications();
+    });
+    document.addEventListener('click', function(e) {
+      if (!notifToggle.contains(e.target)) notifDropdown.classList.remove('open');
+    });
+  }
+
+  if (notifReadAll) {
+    notifReadAll.addEventListener('click', function(e) {
+      e.stopPropagation();
+      fetch('{{ route("notifications.readAll") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+      }).then(function() { loadNotifications(); });
+    });
+  }
+
+  // Poll for new notifications every 60s
+  loadNotifications();
+  setInterval(loadNotifications, 60000);
 })();
 </script>
 

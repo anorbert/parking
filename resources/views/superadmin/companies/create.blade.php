@@ -121,6 +121,25 @@
 
         <p style="font-size:11px;color:var(--pf-muted);margin-top:4px;">A 4-digit PIN will be auto-generated for the admin user.</p>
 
+        <div class="pf-form-section">Subscription Plan</div>
+
+        <div class="pf-form-row">
+          <div>
+            <label class="pf-label">Select Plan</label>
+            <select name="plan_id" class="pf-input">
+              <option value="">— Default Plan —</option>
+              @if(isset($plans))
+                @foreach($plans as $plan)
+                  <option value="{{ $plan->id }}" {{ old('plan_id') == $plan->id ? 'selected' : '' }}>
+                    {{ $plan->name }} — {{ number_format($plan->price) }} RWF / {{ $plan->duration_days }} days
+                  </option>
+                @endforeach
+              @endif
+            </select>
+          </div>
+          <div></div>
+        </div>
+
         <div class="pf-form-actions">
           <button type="submit" class="pf-btn pf-btn-primary">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>

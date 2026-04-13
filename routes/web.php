@@ -25,8 +25,12 @@ use App\Http\Controllers\Users\UserReportController;
 // Super Admin
 use App\Http\Controllers\SuperAdmin\CompanyController;
 use App\Http\Controllers\SuperAdmin\SubscriptionController;
+use App\Http\Controllers\SuperAdmin\PlanController;
 use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
+use App\Http\Controllers\SubscriptionPaymentController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -42,6 +46,7 @@ Route::post('/register', [\App\Http\Controllers\Authentication\RegisterControlle
 Route::middleware(['auth', 'role:1'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
     Route::resource('companies', CompanyController::class);
+    Route::resource('plans', PlanController::class)->except(['show']);
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('/subscriptions/{id}/activate', [SubscriptionController::class, 'activate'])->name('subscriptions.activate');
     Route::post('/subscriptions/{companyId}/renew', [SubscriptionController::class, 'renew'])->name('subscriptions.renew');
@@ -54,6 +59,9 @@ Route::middleware(['auth', 'role:2'])->prefix('admin')->name('admin.')->group(fu
     // Company creation for company admin
     Route::get('companies/create', [\App\Http\Controllers\Admin\CompanyController::class, 'create'])->name('companies.create');
     Route::post('companies', [\App\Http\Controllers\Admin\CompanyController::class, 'store'])->name('companies.store');
+    // Company profile (view & edit own company)
+    Route::get('company', [\App\Http\Controllers\Admin\CompanyController::class, 'profile'])->name('company.profile');
+    Route::put('company', [\App\Http\Controllers\Admin\CompanyController::class, 'updateCompany'])->name('company.update');
 });
 // ─── Company Admin Routes ───────────────────────────────────────────
 Route::middleware(['auth', 'role:2', 'subscription'])->prefix('admin')->name('admin.')->group(function () {
@@ -86,11 +94,26 @@ Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::resource('change-pin', LoginController::class);
 });
 
+// ─── Account (Profile & Settings — all roles) ───────────────────────
+Route::middleware(['auth'])->prefix('account')->name('account.')->group(function () {
+    Route::get('/profile', [AccountController::class, 'profile'])->name('profile');
+    Route::put('/profile', [AccountController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/settings', [AccountController::class, 'settings'])->name('settings');
+    Route::put('/settings/pin', [AccountController::class, 'updatePin'])->name('pin.update');
+});
+
+// ─── Notifications (all roles) ──────────────────────────────────────
+Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+    Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('readAll');
+});
+
 // ─── Subscription Expired ───────────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
-    Route::get('/subscription/expired', function () {
-        return view('subscription.expired');
-    })->name('subscription.expired');
+    Route::get('/subscription/expired', [SubscriptionPaymentController::class, 'expired'])->name('subscription.expired');
+    Route::post('/subscription/pay', [SubscriptionPaymentController::class, 'payWithMomo'])->name('subscription.pay');
+    Route::get('/subscription/processing', [SubscriptionPaymentController::class, 'processing'])->name('subscription.processing');
 });
 
 // Logout

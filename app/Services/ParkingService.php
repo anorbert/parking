@@ -9,6 +9,9 @@ use App\Models\Vehicle;
 use App\Models\PaymentHistory;
 use App\Models\Bank;
 use App\Models\PaymentToken;
+use App\Models\User;
+use App\Notifications\ParkingEntryNotification;
+use App\Notifications\PaymentReceivedNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +51,7 @@ class ParkingService
             $slot->update(['is_occupied' => true]);
 
             // Create parking record
-            return Parking::create([
+            $parking = Parking::create([
                 'plate_number'   => $plateNumber,
                 'entry_time'     => Carbon::now(),
                 'zone_id'        => $zoneId,
@@ -57,6 +60,15 @@ class ParkingService
                 'company_id'     => $companyId,
                 'status'         => 'active',
             ]);
+
+            // Notify company admin
+            $zoneName = $slot->zone->name ?? 'Zone';
+            $admins = User::where('company_id', $companyId)->where('role_id', 2)->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new ParkingEntryNotification($plateNumber, $zoneName));
+            }
+
+            return $parking;
         });
     }
 
@@ -107,6 +119,12 @@ class ParkingService
             // Free the slot
             if ($parking->slot_id) {
                 Slot::where('id', $parking->slot_id)->update(['is_occupied' => false]);
+            }
+
+            // Notify company admin of payment
+            $admins = User::where('company_id', $parking->company_id)->where('role_id', 2)->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new PaymentReceivedNotification($parking->plate_number, (int) $amount, 'cash'));
             }
 
             return ['success' => true, 'message' => 'Payment complete.'];

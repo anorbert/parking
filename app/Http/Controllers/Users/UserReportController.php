@@ -14,7 +14,6 @@ class UserReportController extends Controller
      */
     public function index(Request $request)
     {
-        //
         $query = Parking::where('user_id', Auth::id());
 
         if ($request->filled('start_date')) {
@@ -25,10 +24,18 @@ class UserReportController extends Controller
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
-        $records = $query->latest()->get();
+        $records = $query->with('zone')->latest()->get();
         $total = $records->sum('bill');
 
-        return view('users.reports.index', compact('records', 'total'));
+        // Daily revenue trend (last 14 days)
+        $dailyTrend = Parking::where('user_id', Auth::id())
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->selectRaw("DATE(created_at) as day, SUM(bill) as revenue, COUNT(*) as parkings")
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        return view('users.reports.index', compact('records', 'total', 'dailyTrend'));
     }
 
     /**

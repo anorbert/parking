@@ -15,7 +15,7 @@
   .lp-logo-icon span { font-family: 'Dosis', sans-serif; font-weight: 800; font-size: 24px; color: #0D0F11; line-height: 1; }
   .lp-logo-name { font-size: 22px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; color: #F3F4F6; }
   .lp-logo-sub { font-size: 10px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; color: #6B7280; margin-top: 1px; }
-  .lp-card { width: 100%; max-width: 440px; background: #1E2226; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; padding: 36px 36px 30px; position: relative; overflow: hidden; }
+  .lp-card { width: 100%; max-width: 540px; background: #1E2226; border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; padding: 36px 36px 30px; position: relative; overflow: hidden; }
   .lp-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #F5A800, #FFD166 40%, #3A9ED4 65%, #60C4F5); }
   .lp-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #F5A800; margin-bottom: 8px; font-family: 'Dosis', sans-serif; }
   .lp-title { font-size: 34px; font-weight: 800; letter-spacing: 1px; color: #F3F4F6; line-height: 1.1; margin-bottom: 4px; font-family: 'Dosis', sans-serif; }
@@ -41,7 +41,11 @@
   .lp-link a { color: #60C4F5; text-decoration: none; font-weight: 600; }
   .lp-link a:hover { color: #F5A800; }
   .lp-footer { margin-top: 20px; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; color: #353A42; text-align: center; }
-  @media (max-width: 480px) { .lp-card { padding: 28px 20px 24px; border-radius: 14px; } .lp-title { font-size: 28px; } }
+  .lp-section { font-size: 10px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; color: #F5A800; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
+  .lp-section-icon { width: 24px; height: 24px; border-radius: 6px; background: rgba(245,168,0,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .lp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .lp-row .lp-field { margin-bottom: 14px; }
+  @media (max-width: 480px) { .lp-card { padding: 28px 20px 24px; border-radius: 14px; } .lp-title { font-size: 28px; } .lp-row { grid-template-columns: 1fr; } }
 </style>
 @endpush
 
@@ -60,7 +64,7 @@
   <div class="lp-card">
     <div class="lp-eyebrow">New Account</div>
     <div class="lp-title">Create Account</div>
-    <div class="lp-sub">Register to start managing your parking experience.</div>
+    <div class="lp-sub">Register your company and start managing parking.</div>
 
     <hr class="lp-divider">
 
@@ -70,6 +74,14 @@
 
     <form method="POST" action="{{ route('register.store') }}" autocomplete="off">
       @csrf
+
+      {{-- ── PERSONAL INFORMATION ── --}}
+      <div class="lp-section">
+        <div class="lp-section-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F5A800" stroke-width="2.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        Personal Information
+      </div>
 
       {{-- Full Name --}}
       <div class="lp-field">
@@ -95,26 +107,100 @@
         @error('phone_number') <div class="lp-ferr">{{ $message }}</div> @enderror
       </div>
 
-      {{-- PIN --}}
-      <div class="lp-field">
-        <label>4-Digit PIN</label>
-        <div class="lp-pin-wrap lp-input-wrap">
-          <span class="lp-input-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </span>
-          <input type="password" name="pin" id="pin" inputmode="numeric" maxlength="4" placeholder="••••" required />
+      <div class="lp-row">
+        {{-- PIN --}}
+        <div class="lp-field">
+          <label>4-Digit PIN</label>
+          <div class="lp-pin-wrap lp-input-wrap">
+            <span class="lp-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <input type="password" name="pin" id="pin" inputmode="numeric" maxlength="4" placeholder="••••" required />
+          </div>
+          @error('pin') <div class="lp-ferr">{{ $message }}</div> @enderror
         </div>
-        @error('pin') <div class="lp-ferr">{{ $message }}</div> @enderror
+
+        {{-- Confirm PIN --}}
+        <div class="lp-field">
+          <label>Confirm PIN</label>
+          <div class="lp-pin-wrap lp-input-wrap">
+            <span class="lp-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <input type="password" name="pin_confirmation" id="pin_confirmation" inputmode="numeric" maxlength="4" placeholder="••••" required />
+          </div>
+        </div>
       </div>
 
-      {{-- Confirm PIN --}}
+      {{-- ── COMPANY INFORMATION ── --}}
+      <div class="lp-section">
+        <div class="lp-section-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F5A800" stroke-width="2.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        Company Details
+      </div>
+
+      {{-- Company Name --}}
       <div class="lp-field">
-        <label>Confirm PIN</label>
-        <div class="lp-pin-wrap lp-input-wrap">
+        <label>Company Name</label>
+        <div class="lp-input-wrap">
           <span class="lp-input-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           </span>
-          <input type="password" name="pin_confirmation" id="pin_confirmation" inputmode="numeric" maxlength="4" placeholder="••••" required />
+          <input type="text" name="company_name" value="{{ old('company_name') }}" placeholder="Parking Solutions Ltd" required />
+        </div>
+        @error('company_name') <div class="lp-ferr">{{ $message }}</div> @enderror
+      </div>
+
+      <div class="lp-row">
+        {{-- TIN --}}
+        <div class="lp-field">
+          <label>TIN Number</label>
+          <div class="lp-input-wrap">
+            <span class="lp-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </span>
+            <input type="text" name="company_tin" value="{{ old('company_tin') }}" placeholder="1234567890" />
+          </div>
+          @error('company_tin') <div class="lp-ferr">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Company Phone --}}
+        <div class="lp-field">
+          <label>Company Phone</label>
+          <div class="lp-input-wrap">
+            <span class="lp-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3-8.59A2 2 0 0 1 3.69 1.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.91 6.91l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <input type="tel" name="company_phone" value="{{ old('company_phone') }}" placeholder="078 XXX XXXX" />
+          </div>
+          @error('company_phone') <div class="lp-ferr">{{ $message }}</div> @enderror
+        </div>
+      </div>
+
+      <div class="lp-row">
+        {{-- Company Email --}}
+        <div class="lp-field">
+          <label>Company Email</label>
+          <div class="lp-input-wrap">
+            <span class="lp-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </span>
+            <input type="email" name="company_email" value="{{ old('company_email') }}" placeholder="info@company.com" />
+          </div>
+          @error('company_email') <div class="lp-ferr">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Company Address --}}
+        <div class="lp-field">
+          <label>Address</label>
+          <div class="lp-input-wrap">
+            <span class="lp-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
+            <input type="text" name="company_address" value="{{ old('company_address') }}" placeholder="Kigali, Rwanda" />
+          </div>
+          @error('company_address') <div class="lp-ferr">{{ $message }}</div> @enderror
         </div>
       </div>
 
