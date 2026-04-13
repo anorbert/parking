@@ -32,9 +32,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Login routes
+// Login & Registration routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+Route::get('/register', [\App\Http\Controllers\Authentication\RegisterController::class, 'index'])->name('register');
+Route::post('/register', [\App\Http\Controllers\Authentication\RegisterController::class, 'store'])->name('register.store');
 
 // ─── Super Admin Routes ─────────────────────────────────────────────
 Route::middleware(['auth', 'role:1'])->prefix('superadmin')->name('superadmin.')->group(function () {
@@ -47,7 +49,14 @@ Route::middleware(['auth', 'role:1'])->prefix('superadmin')->name('superadmin.')
 });
 
 // ─── Company Admin Routes ───────────────────────────────────────────
-Route::middleware(['auth', 'role:2', 'company.scope', 'subscription'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:2'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    // Company creation for company admin
+    Route::get('companies/create', [\App\Http\Controllers\Admin\CompanyController::class, 'create'])->name('companies.create');
+    Route::post('companies', [\App\Http\Controllers\Admin\CompanyController::class, 'store'])->name('companies.store');
+});
+// ─── Company Admin Routes ───────────────────────────────────────────
+Route::middleware(['auth', 'role:2', 'subscription'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('staff', StaffController::class);
     Route::resource('vehicles', VehicleController::class);
