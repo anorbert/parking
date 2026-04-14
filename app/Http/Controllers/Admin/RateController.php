@@ -14,9 +14,11 @@ class RateController extends Controller
      */
     public function index()
     {
-        //
-        $zones = Zone::all();
-        $rates = ParkingRate::with('zone')->get();
+        $companyId = auth()->user()->company_id;
+        $zones = Zone::where('company_id', $companyId)->get();
+        $rates = ParkingRate::with('zone')
+            ->whereHas('zone', fn($q) => $q->where('company_id', $companyId))
+            ->get();
         return view('admin.rates.index', compact('zones', 'rates'));
     }
 
@@ -25,8 +27,7 @@ class RateController extends Controller
      */
     public function create()
     {
-        //
-        $zones = Zone::all();
+        $zones = Zone::where('company_id', auth()->user()->company_id)->get();
         return view('admin.rates.create', compact('zones'));
     }
 
@@ -66,11 +67,12 @@ class RateController extends Controller
      */
     public function edit(string $id)
     {
-        //
-        $rate = ParkingRate::with('zone')->findOrFail($id);
-        $zones = Zone::all();
+        $companyId = auth()->user()->company_id;
+        $rate = ParkingRate::with('zone')
+            ->whereHas('zone', fn($q) => $q->where('company_id', $companyId))
+            ->findOrFail($id);
+        $zones = Zone::where('company_id', $companyId)->get();
         return view('admin.rates.edit', compact('rate', 'zones'));
-
     }
 
     /**

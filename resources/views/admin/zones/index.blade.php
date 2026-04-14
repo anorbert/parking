@@ -60,7 +60,7 @@
                  style="border-radius:8px;font-family:var(--pf-font);font-weight:600;">
         </div>
         <div class="col-md-3 mb-2">
-          <input type="number" name="capacity" class="form-control" placeholder="Capacity" required min="1"
+          <input type="number" name="total_slots" class="form-control" placeholder="Capacity" required min="1"
                  style="border-radius:8px;font-family:var(--pf-font);font-weight:600;">
         </div>
         <div class="col-md-2 mb-2">

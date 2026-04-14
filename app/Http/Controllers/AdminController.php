@@ -35,19 +35,19 @@ class AdminController extends Controller
 
         // Total revenue Today
         $totalRevenue = Parking::where('company_id', $companyId)
-            ->whereDay('created_at', now()->day)
+            ->whereDate('created_at', today())
             ->sum('bill');
 
         // Total revenue MOMO
         $momo = Parking::where('company_id', $companyId)
             ->where('payment_method', 'momo')
-            ->whereDay('created_at', now()->day)
+            ->whereDate('created_at', today())
             ->sum('bill');
 
         // Total revenue Cash
         $cash = Parking::where('company_id', $companyId)
             ->where('payment_method', 'cash')
-            ->whereDay('created_at', now()->day)
+            ->whereDate('created_at', today())
             ->sum('bill');
 
         // Active tickets

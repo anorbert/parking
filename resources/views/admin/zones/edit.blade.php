@@ -71,8 +71,8 @@
       </div>
 
       <div class="form-group">
-        <label for="capacity">Capacity (Number of Slots)</label>
-        <input type="number" name="capacity" id="capacity" class="form-control" value="{{ old('capacity', $zone->capacity ?? $zone->total_slots ?? $zone->slots->count()) }}" required min="1">
+        <label for="total_slots">Capacity (Number of Slots)</label>
+        <input type="number" name="total_slots" id="total_slots" class="form-control" value="{{ old('total_slots', $zone->total_slots ?? $zone->slots->count()) }}" required min="1">
       </div>
 
       <div class="pf-edit-actions">

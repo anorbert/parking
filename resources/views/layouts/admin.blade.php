@@ -138,6 +138,16 @@ body, html {
   color: var(--pf-yellow); letter-spacing: 0.5px;
 }
 
+.pf-sb-badge {
+  margin-left: auto;
+  min-width: 16px; height: 16px;
+  padding: 0 5px; border-radius: 8px;
+  background: #EF4444; color: #fff;
+  font-size: 9px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+
 /* Sidebar submenus */
 .pf-sb-submenu { list-style: none; padding: 0; margin: 0 0 4px 26px; }
 .pf-sb-submenu a {
@@ -477,6 +487,25 @@ body, html {
   // Poll for new notifications every 60s
   loadNotifications();
   setInterval(loadNotifications, 60000);
+
+  // Help chat unread badge
+  function loadHelpBadge() {
+    fetch('{{ route("help.chat.unread") }}')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var badge = document.getElementById('pf-help-badge');
+        if (badge) {
+          if (data.count > 0) {
+            badge.textContent = data.count;
+            badge.style.display = 'inline-flex';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      });
+  }
+  loadHelpBadge();
+  setInterval(loadHelpBadge, 15000);
 })();
 </script>
 

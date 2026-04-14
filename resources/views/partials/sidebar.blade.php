@@ -38,10 +38,9 @@
           <li>
             <a><i class="fa fa-th"></i> Parking Management <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-              <li><a href="{{route('zones.index')}}">Zones</a></li>
-              <li><a href="{{route('slots.index')}}">Parking Slots</a></li>
-              <li><a href="{{route('vehicles.index')}}">Exempted Vehicles</a></li>
-              <li><a href="{{route('logs.index')}}">Entry & Exit Logs</a></li>
+              <li><a href="{{route('admin.zones.index')}}">Zones</a></li>
+              <li><a href="{{route('admin.vehicles.index')}}">Exempted Vehicles</a></li>
+              <li><a href="{{route('admin.logs.index')}}">Entry & Exit Logs</a></li>
             </ul>
           </li>
 
@@ -56,8 +55,8 @@
           <li>
             <a><i class="fa fa-cogs"></i> Settings <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-              <li><a href="{{route('staff.index')}}">Users</a></li>
-              <li><a href="{{route('rates.index')}}">Parking Rates</a></li>
+              <li><a href="{{route('admin.staff.index')}}">Users</a></li>
+              <li><a href="{{route('admin.rates.index')}}">Parking Rates</a></li>
               <li><a href="">System Settings</a></li>
             </ul>
           </li>

@@ -18,6 +18,6 @@ class PaymentToken extends Model
 
     public function bank()
 	{
-	    return $this->belongsTo(PaymentHook::class, 'bank_id');
+	    return $this->belongsTo(Bank::class, 'bank_id');
 	}
 }

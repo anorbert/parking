@@ -198,10 +198,15 @@ class ParkingService
             ->first();
 
         if (!$token) {
-            $res = Http::post('https://payments-api.fdibiz.com/v2/auth', [
-                'appId'  => $bank->appId,
-                'secret' => $bank->secret,
-            ]);
+            try {
+                $res = Http::timeout(30)->post('https://payments-api.fdibiz.com/v2/auth', [
+                    'appId'  => $bank->appId,
+                    'secret' => $bank->secret,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('FDI auth request failed: ' . $e->getMessage());
+                throw new \Exception('Payment service is temporarily unavailable. Please try again.');
+            }
 
             if (!$res->successful()) {
                 throw new \Exception('Payment token retrieval failed.');
@@ -216,6 +221,10 @@ class ParkingService
         }
 
         $number = preg_replace('/\D/', '', $phone);
+        if (strlen($number) < 9) {
+            throw new \Exception('Invalid phone number format.');
+        }
+
         $prefix = substr($number, -9, 2);
         $trx_ref = Str::random(32);
 
@@ -229,17 +238,22 @@ class ParkingService
             throw new \Exception('Invalid phone number for MoMo payment.');
         }
 
-        $res = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token->token,
-            'Content-Type'  => 'application/json',
-        ])->post('https://payments-api.fdibiz.com/v2/momo/pull', [
-            'trxRef'    => $trx_ref,
-            'channelId' => $operator,
-            'accountId' => $bank->appId,
-            'msisdn'    => '250' . substr($number, -9),
-            'amount'    => $amount,
-            'callback'  => config('app.url') . '/api/payment/callback',
-        ]);
+        try {
+            $res = Http::timeout(30)->withHeaders([
+                'Authorization' => 'Bearer ' . $token->token,
+                'Content-Type'  => 'application/json',
+            ])->post('https://payments-api.fdibiz.com/v2/momo/pull', [
+                'trxRef'    => $trx_ref,
+                'channelId' => $operator,
+                'accountId' => $bank->appId,
+                'msisdn'    => '250' . substr($number, -9),
+                'amount'    => $amount,
+                'callback'  => config('app.url') . '/api/payment/callback',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('FDI MoMo pull request failed: ' . $e->getMessage());
+            throw new \Exception('Payment service is temporarily unavailable. Please try again.');
+        }
 
         PaymentHistory::create([
             'parking_id'   => $parking->id,

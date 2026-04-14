@@ -32,37 +32,40 @@ class VehicleController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $companyId = auth()->user()->company_id;
+
         $request->validate([
-            'plate_number' => 'required|string|max:255|unique:vehicles',
+            'plate_number' => 'required|string|max:255',
+            'vehicle_type' => 'nullable|string|max:255',
             'expired_at' => 'nullable|date',
             'owner_name' => 'required|string|max:255',
             'owner_contact' => 'nullable|string|max:255',
             'billing_type' => 'nullable|string|max:255',
             'reason' => 'nullable|string|max:255',
         ]);
-        //check if the vehicle already exists
-        $existingVehicle = Vehicle::where('plate_number', $request->plate_number)->first();
+
+        $existingVehicle = Vehicle::where('plate_number', $request->plate_number)
+            ->where('company_id', $companyId)
+            ->first();
         if ($existingVehicle) {
             return back()->with('error', 'Vehicle with this plate number already exists.');
         }
-        // If the vehicle does not exist, create a new vehicle record
-        $vehicle = Vehicle::create(
-            [
-                'plate_number' => $request->plate_number,
-                'vehicle_type' => 'Car',
-                'expired_at' => $request->expired_at,
-                'owner_name' => $request->owner_name,
-                'owner_contact' => $request->owner_contact,
-                'billing_type' => $request->billing_type ?? 'Free',
-                'reason' => $request->reason,
-                'company_id' => auth()->user()->company_id,
-            ]
-        );
+
+        $vehicle = Vehicle::create([
+            'plate_number' => $request->plate_number,
+            'vehicle_type' => $request->vehicle_type ?? 'Car',
+            'expired_at' => $request->expired_at,
+            'owner_name' => $request->owner_name,
+            'owner_contact' => $request->owner_contact,
+            'billing_type' => $request->billing_type ?? 'Free',
+            'reason' => $request->reason,
+            'company_id' => $companyId,
+        ]);
+
         if (!$vehicle) {
             return back()->with('error', 'Failed to add vehicle. Please try again.');
         }
-        // If the vehicle is added successfully, redirect back with a success message
+
         return back()->with('success', 'Vehicle added successfully.');
     }
 
@@ -71,9 +74,8 @@ class VehicleController extends Controller
      */
     public function show(string $id)
     {
-        //
-        $vehicle = Vehicle::findOrFail($id);
-        return view('admin.vehicles.show', compact('vehicle')); // Placeholder view
+        $vehicle = Vehicle::where('company_id', auth()->user()->company_id)->findOrFail($id);
+        return view('admin.vehicles.show', compact('vehicle'));
     }
 
     /**
@@ -90,7 +92,8 @@ class VehicleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $companyId = auth()->user()->company_id;
+
         $request->validate([
             'plate_number' => 'required|string|max:255|unique:vehicles,plate_number,' . $id,
             'vehicle_type' => 'nullable|string|max:255',
@@ -99,21 +102,17 @@ class VehicleController extends Controller
             'billing_type' => 'nullable|string|max:255',
             'reason' => 'nullable|string|max:255',
         ]);
-        $vehicle = Vehicle::findOrFail($id);
-        $vehicle->update(
-            [
-                'plate_number' => $request->plate_number,
-                'vehicle_type' => $request->vehicle_type,
-                'owner_name' => $request->owner_name,
-                'owner_contact' => $request->owner_contact,
-                'billing_type' => $request->billing_type ?? 'Free',
-                'reason' => $request->reason,
-            ]
-        );
-        if (!$vehicle) {
-            return back()->with('error', 'Failed to update vehicle. Please try again.');
-        }
-        // If the vehicle is updated successfully, redirect back with a success message
+
+        $vehicle = Vehicle::where('company_id', $companyId)->findOrFail($id);
+        $vehicle->update([
+            'plate_number' => $request->plate_number,
+            'vehicle_type' => $request->vehicle_type ?? $vehicle->vehicle_type,
+            'owner_name' => $request->owner_name,
+            'owner_contact' => $request->owner_contact,
+            'billing_type' => $request->billing_type ?? 'Free',
+            'reason' => $request->reason,
+        ]);
+
         return back()->with('success', 'Vehicle updated successfully.');
     }
 
@@ -122,11 +121,7 @@ class VehicleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-        $vehicle = Vehicle::findOrFail($id);
-        if (!$vehicle) {
-            return back()->with('error', 'Vehicle not found.');
-        }
+        $vehicle = Vehicle::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $vehicle->delete();
         return back()->with('success', 'Vehicle deleted successfully.');
     }

@@ -31,10 +31,15 @@ use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
 use App\Http\Controllers\SubscriptionPaymentController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('/about', function () {
+    return view('about');
+})->name('about');
 
 // Login & Registration routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -62,10 +67,14 @@ Route::middleware(['auth', 'role:2'])->prefix('admin')->name('admin.')->group(fu
     // Company profile (view & edit own company)
     Route::get('company', [\App\Http\Controllers\Admin\CompanyController::class, 'profile'])->name('company.profile');
     Route::put('company', [\App\Http\Controllers\Admin\CompanyController::class, 'updateCompany'])->name('company.update');
+
+    // Subscription management (accessible even when expired)
+    Route::get('subscription', [AdminSubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('subscription/renew', [AdminSubscriptionController::class, 'renew'])->name('subscription.renew');
+    Route::post('subscription/upgrade', [AdminSubscriptionController::class, 'upgrade'])->name('subscription.upgrade');
 });
 // ─── Company Admin Routes ───────────────────────────────────────────
 Route::middleware(['auth', 'role:2', 'subscription'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('staff', StaffController::class);
     Route::resource('vehicles', VehicleController::class);
     Route::resource('zones', ZoneController::class);
@@ -107,6 +116,16 @@ Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->gr
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
     Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('readAll');
+});
+
+// ─── Help & Support (all roles) ─────────────────────────────────────
+Route::middleware(['auth'])->prefix('help')->name('help.')->group(function () {
+    Route::get('/guide', [\App\Http\Controllers\HelpController::class, 'guide'])->name('guide');
+    Route::get('/chat', [\App\Http\Controllers\HelpController::class, 'chat'])->name('chat');
+    Route::post('/chat/send', [\App\Http\Controllers\HelpController::class, 'send'])->name('chat.send');
+    Route::get('/chat/messages', [\App\Http\Controllers\HelpController::class, 'messages'])->name('chat.messages');
+    Route::get('/chat/unread', [\App\Http\Controllers\HelpController::class, 'unreadCount'])->name('chat.unread');
+    Route::get('/chat/{userId}', [\App\Http\Controllers\HelpController::class, 'conversation'])->name('chat.conversation');
 });
 
 // ─── Subscription Expired ───────────────────────────────────────────

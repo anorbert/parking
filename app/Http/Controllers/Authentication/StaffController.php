@@ -71,7 +71,9 @@ class StaffController extends Controller
 
     public function show(string $id)
     {
-        $user = User::with('role')->findOrFail($id);
+        $user = User::with('role')
+            ->where('company_id', auth()->user()->company_id)
+            ->findOrFail($id);
         return view('admin.staffs.show', compact('user'));
     }
 
@@ -86,7 +88,7 @@ class StaffController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::where('company_id', auth()->user()->company_id)->findOrFail($id);
 
         $request->validate([
             'name'         => 'required|string|max:255',
@@ -118,7 +120,12 @@ class StaffController extends Controller
 
     public function destroy(string $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::where('company_id', auth()->user()->company_id)->findOrFail($id);
+
+        // Prevent deleting yourself
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'You cannot delete your own account.');
+        }
 
         if ($user->delete()) {
             return redirect()->route('admin.staff.index')->with('success', 'Staff deleted successfully.');

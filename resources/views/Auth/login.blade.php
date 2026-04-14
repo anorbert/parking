@@ -299,6 +299,71 @@
   .lp-bdot.b { background: #60C4F5; box-shadow: 0 0 6px rgba(96,196,245,0.5); }
   .lp-bdot.g { background: #4ADE80; box-shadow: 0 0 6px rgba(74,222,128,0.5); }
 
+  .lp-register-link {
+    display: block; text-align: center;
+    margin-top: 18px; font-size: 13px;
+    color: #6B7280;
+  }
+  .lp-register-link a {
+    color: #60C4F5; text-decoration: none; font-weight: 600;
+    transition: color 0.2s;
+  }
+  .lp-register-link a:hover { color: #F5A800; }
+
+  .lp-info {
+    width: 100%; max-width: 680px;
+    margin-top: 28px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  }
+  .lp-info-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 20px 18px;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .lp-info-card:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(245,168,0,0.2);
+  }
+  .lp-info-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 10px; font-size: 18px;
+  }
+  .lp-info-icon.yellow { background: rgba(245,168,0,0.12); color: #F5A800; }
+  .lp-info-icon.blue   { background: rgba(58,158,212,0.12); color: #60C4F5; }
+  .lp-info-icon.green  { background: rgba(74,222,128,0.12); color: #4ADE80; }
+  .lp-info-title {
+    font-size: 13px; font-weight: 800;
+    color: #E5E7EB; letter-spacing: 0.3px;
+    margin-bottom: 5px;
+  }
+  .lp-info-desc {
+    font-size: 11px; font-weight: 400;
+    color: #6B7280; line-height: 1.5;
+  }
+
+  .lp-learn-more {
+    display: block; text-align: center;
+    margin-top: 18px;
+  }
+  .lp-learn-more a {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 22px; border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    color: #60C4F5; font-size: 12px; font-weight: 700;
+    text-decoration: none; letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .lp-learn-more a:hover {
+    background: rgba(96,196,245,0.08);
+    border-color: rgba(96,196,245,0.25);
+  }
+
   .lp-footer {
     margin-top: 20px;
     font-size: 11px; font-weight: 500;
@@ -310,6 +375,10 @@
     .lp-card { padding: 28px 20px 24px; border-radius: 14px; }
     .lp-title { font-size: 28px; }
     .lp-badge-row { flex-wrap: wrap; }
+    .lp-info { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 481px) and (max-width: 640px) {
+    .lp-info { grid-template-columns: 1fr 1fr; }
   }
 </style>
 @endpush
@@ -399,8 +468,36 @@
 
       <button type="submit" class="lp-btn">Log In to System</button>
 
-      {{-- Registration disabled --}}
+      <div class="lp-register-link">
+        New company? <a href="{{ route('register') }}">Register here</a>
+      </div>
     </form>
+  </div>
+
+  {{-- System Info --}}
+  <div class="lp-info">
+    <div class="lp-info-card">
+      <div class="lp-info-icon yellow">&#9881;</div>
+      <div class="lp-info-title">Smart Management</div>
+      <div class="lp-info-desc">Real-time slot tracking, automated billing, and live occupancy monitoring across all zones.</div>
+    </div>
+    <div class="lp-info-card">
+      <div class="lp-info-icon blue">&#128179;</div>
+      <div class="lp-info-title">Flexible Payments</div>
+      <div class="lp-info-desc">Accept cash or MoMo mobile money. Instant receipts and full payment history for every transaction.</div>
+    </div>
+    <div class="lp-info-card">
+      <div class="lp-info-icon green">&#128200;</div>
+      <div class="lp-info-title">Reports &amp; Analytics</div>
+      <div class="lp-info-desc">Daily revenue trends, zone usage stats, and exportable reports to keep your business on track.</div>
+    </div>
+  </div>
+
+  <div class="lp-learn-more">
+    <a href="{{ route('about') }}">
+      Learn More About ParkFlow
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
   </div>
 
   {{-- Badge Row --}}

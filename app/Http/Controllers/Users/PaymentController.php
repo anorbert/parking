@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Parking;
+use App\Models\Slot;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PaymentHistory;
 use App\Models\User;
@@ -148,6 +149,11 @@ class PaymentController extends Controller
                     $parking->status = 'inactive';
                     $parking->save();
 
+                    // Free the slot
+                    if ($parking->slot_id) {
+                        Slot::where('id', $parking->slot_id)->update(['is_occupied' => false]);
+                    }
+
                     // Notify company admin of MoMo payment
                     $admins = User::where('company_id', $parking->company_id)->where('role_id', 2)->get();
                     foreach ($admins as $admin) {
@@ -226,10 +232,9 @@ class PaymentController extends Controller
                 $charges= $transaction->bank->charges;
                 $balance= $transaction->bank->balance;
                 $newBalance= $transaction->amount-($transaction->amount * $charges/100);                
-                $bank->balance = $balance - $newBalance;
+                $bank->balance = $balance + $newBalance;
                 // Save the updated bank balance                
                 $bank->save();
-                // Log::info('Bank balance updated:', $bank->balance);
 
                 
                 // Update the transaction status to Completed

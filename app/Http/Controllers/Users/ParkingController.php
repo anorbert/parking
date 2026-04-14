@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\Parking;
+use App\Models\Slot;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -96,10 +97,6 @@ class ParkingController extends Controller
     public function destroy(string $id)
     {
         //
-        $parking = Parking::findOrFail($id);
-        $parking->exit_time = Carbon::now();
-        $parking->save();
-        return back()->with('success', 'Car exited successfully.');
     }
 
     public function exit(Request $request, $id)
@@ -148,11 +145,16 @@ class ParkingController extends Controller
         if ($transaction->status === 'Completed') {
             //Update the parking status to inactive
             $parking = Parking::where('id', $transaction->parking_id)->first();
-            if ($parking) {
+            if ($parking && $parking->status !== 'inactive') {
                 $parking->status = 'inactive';
                 $parking->phone_number = $transaction->phone_number;
                 $parking->payment_method = 'momo';
                 $parking->save();
+
+                // Free the slot
+                if ($parking->slot_id) {
+                    Slot::where('id', $parking->slot_id)->update(['is_occupied' => false]);
+                }
             }
         }
 
