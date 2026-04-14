@@ -125,6 +125,7 @@ Route::middleware(['auth'])->prefix('help')->name('help.')->group(function () {
     Route::post('/chat/send', [\App\Http\Controllers\HelpController::class, 'send'])->name('chat.send');
     Route::get('/chat/messages', [\App\Http\Controllers\HelpController::class, 'messages'])->name('chat.messages');
     Route::get('/chat/unread', [\App\Http\Controllers\HelpController::class, 'unreadCount'])->name('chat.unread');
+    Route::get('/chat/contacts', [\App\Http\Controllers\HelpController::class, 'contacts'])->name('chat.contacts');
     Route::get('/chat/{userId}', [\App\Http\Controllers\HelpController::class, 'conversation'])->name('chat.conversation');
 });
 
